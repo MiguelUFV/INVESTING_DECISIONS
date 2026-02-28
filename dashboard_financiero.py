@@ -441,9 +441,9 @@ def main():
     valid_tickers = st.session_state["valid_tickers"]
     raw_data = st.session_state["raw_data"]
 
-    # --- 5 PESTANAS ESTRUCTURALES ---
-    tab_tec, tab_quant, tab_solver, tab_oraculo, tab_data = st.tabs([
-        "ANALISIS TECNICO Y MOMENTUM", "METRICAS RIESGO (CAPM)", "OPTIMIZACION MARKOVITZ", "PROYECCION ESTOCASTICA (VaR)", "AUDITORIA DE RAW DATA"
+    # --- 9 PESTANAS ESTRUCTURALES (EXPANSION SAAS) ---
+    tab_tec, tab_quant, tab_solver, tab_oraculo, tab_port, tab_fund, tab_backtest, tab_report, tab_data = st.tabs([
+        "TÉCNICO / MOMENTUM", "RIESGO (CAPM)", "MARKOWITZ", "MONTE CARLO (VaR)", "MI PORTAFOLIO", "MACRO & NOTICIAS", "BACKTESTER", "REPORTE PDF", "RAW DATA"
     ])
 
     # --- TAB 1: DASHBOARD TECNICO + MACD/RSI ---
@@ -583,16 +583,155 @@ def main():
                     
                     interpret_oraculo(sim_data, var_95)
 
-    # --- TAB 5: AUDITORIA DATOS ---
+    # --- TAB 5: CARTERA REAL (PORTFOLIO TRACKER) ---
+    with tab_port:
+        st.markdown("### VALORACION DE CARTERA Y PnL EN VIVO")
+        st.markdown("Carga aquí tus posiciones actuales de mercado para computar su valor nominal e impacto marginal de riesgo.")
+        
+        if valid_tickers:
+            with st.form("portfolio_form"):
+                cols = st.columns(4)
+                shares = {}
+                for i, tk in enumerate(valid_tickers):
+                    with cols[i % 4]:
+                         shares[tk] = st.number_input(f"Acciones de {tk}", min_value=0.0, value=0.0, step=1.0)
+                port_submit = st.form_submit_button("COMPUTAR VALORACION", type="primary")
+            
+            if port_submit and sum(shares.values()) > 0:
+                total_val = 0
+                st.markdown("#### DESGLOSE NOMINAL DE POSICIONES")
+                c1, c2, c3, c4 = st.columns(4)
+                col_idx = 0
+                cols_layout = [c1, c2, c3, c4]
+                for tk, sh in shares.items():
+                    if sh > 0:
+                        price = df_close[tk].iloc[-1]
+                        val = price * sh
+                        total_val += val
+                        with cols_layout[col_idx % 4]:
+                            st.metric(f"{tk} ({sh} uds)", f"{val:,.2f} $", delta=f"Precio UD: {price:.2f} $", delta_color="off")
+                        col_idx += 1
+                
+                st.markdown("<hr>", unsafe_allow_html=True)
+                st.metric("VALOR TOTAL DE CARTERA (AUM)", f"{total_val:,.2f} $")
+                
+                # VaR de Cartera Sintetizado 
+                ret_port = sum((df_close[tk].pct_change().dropna() * (shares[tk]*df_close[tk].iloc[-1] / total_val)) for tk in shares if shares[tk]>0 )
+                var_cartera = calculate_var(ret_port, 0.95)
+                st.warning(f"⚠️ **Riesgo de Ruina (VaR 95%):** Estadísticamente, en tu peor día de crash podrías perder hasta el **{var_cartera*100:.2f}%** ({abs(total_val * var_cartera):,.2f} $) del capital inyectado.")
+        else:
+            st.info("Agrega activos en la barra lateral para gestionarlos.")
+
+    # --- TAB 6: FUNDAMENTAL Y NOTICIAS ---
+    with tab_fund:
+        c_head, c_select = st.columns([3, 1])
+        c_head.markdown("### MACROECONOMIA, FUNDAMENTALES Y DATA LAKE")
+        t_fund = c_select.selectbox("AUDITORÍA CORPORATIVA:", valid_tickers, label_visibility="collapsed", key="fund_sel")
+        
+        if t_fund:
+            with st.spinner(f"Conectando con Data Lake de YFinance para {t_fund}..."):
+                try:
+                    tk_obj = yf.Ticker(t_fund)
+                    info = tk_obj.info
+                    news = tk_obj.news
+                    
+                    st.markdown(f"#### MÉTRICAS DE VALORACIÓN: {t_fund}")
+                    c1, c2, c3, c4 = st.columns(4)
+                    
+                    pe = info.get('trailingPE', 'N/A')
+                    dy = info.get('dividendYield', 0)
+                    pm = info.get('profitMargins', 0)
+                    mcap = info.get('marketCap', 0)
+                    
+                    c1.metric("P/E Ratio (PER)", pe)
+                    c2.metric("Dividend Yield", f"{dy*100:.2f}%" if dy else 'N/A')
+                    c3.metric("Profit Margin", f"{pm*100:.2f}%" if pm else 'N/A')
+                    c4.metric("Market Cap", f"{mcap/1e9:.2f}B $" if mcap else 'N/A')
+                    
+                    with st.expander("🎯 TRADUCCION PRACTICA DE FUNDAMENTALES", expanded=True):
+                        st.markdown("> *El **PER** indica cuántos años tardarías en recuperar tu inversión si los beneficios fuesen constantes (menos es más barato). El **Dividend Yield** es el % de dinero extra que te pagan al año solo por tener la acción. El **Profit Margin** indica de cada 100$ que venden, cuánto es beneficio puro para el bolsillo.*")
+                    
+                    st.markdown("#### TERMINAL DE NOTICIAS EN VIVO (BLOOMBERG/REUTERS FEED)")
+                    if news:
+                        for n in news[:5]:
+                            st.markdown(f"📰 **[{n.get('title')}]({n.get('link')})** - *(Fuente: {n.get('publisher')})*")
+                    else:
+                        st.info("No hay noticias macroeconómicas o corporativas recientes.")
+                except Exception as e:
+                    st.error(f"El Data Lake no devolvió fundamentales directos para el activo {t_fund}.")
+
+    # --- TAB 7: BACKTESTER MAQUINA DEL TIEMPO ---
+    with tab_backtest:
+        st.markdown("### MAQUINA DEL TIEMPO (BACKTESTER HISTORICO)")
+        st.markdown("Simulación retrospectiva de la inyección de capital inicial frente a estrategias de Benchmark pasivo.")
+        
+        c_cap, c_btn = st.columns([1, 1])
+        with c_cap:
+             cap_inicial = st.number_input("CAPITAL INICIAL ($)", min_value=100.0, value=10000.0, step=1000.0, help="Dólares hipotéticos que hubieras invertido con tu cartera actual.")
+        
+        if c_btn.button("EYECTAR BACKTEST (VS SPY)", type="primary"):
+            if BENCHMARK_TICKER not in df_close.columns:
+                st.warning(f"Se necesita al ETF {BENCHMARK_TICKER} como proxy de mercado.")
+            elif len(valid_tickers) < 2:
+                st.warning("Selecciona al menos 2 activos en tu cartera para el Backtest.")
+            else:
+                ret_bench = df_close[BENCHMARK_TICKER].pct_change().dropna()
+                # Cartera iterativa para la simulación
+                ret_port = df_close[[t for t in valid_tickers if t != BENCHMARK_TICKER]].pct_change().dropna().mean(axis=1) if len(valid_tickers)>1 else ret_bench
+                
+                cap_bench = cap_inicial * (1 + ret_bench).cumprod()
+                cap_port = cap_inicial * (1 + ret_port).cumprod()
+                
+                fig_bt = go.Figure()
+                fig_bt.add_trace(go.Scatter(x=cap_bench.index, y=cap_bench, mode='lines', name='S&P 500 (SPY)', line=dict(color=COLOR_SMOKE)))
+                fig_bt.add_trace(go.Scatter(x=cap_port.index, y=cap_port, mode='lines', name='Mi Cartera Actual', line=dict(color=COLOR_TREND, width=2)))
+                fig_bt = clean_layout(fig_bt, title="CRECIMIENTO DEL EQUITY (CURVA DE CAPITAL)", height=450)
+                st.plotly_chart(fig_bt, use_container_width=True)
+                
+                dif = cap_port.iloc[-1] - cap_bench.iloc[-1]
+                st.success(f"📈 **COSTE DE OPORTUNIDAD:** Elegir tu cartera te hizo ganar/perder **{dif:,.2f} $** frente a simplemente haber comprado el mercado americano clásico.")
+                c1, c2 = st.columns(2)
+                c1.metric("SALDO FINAL CARTERA", f"{cap_port.iloc[-1]:,.2f} $", delta=f"{cap_port.iloc[-1] - cap_inicial:,.2f} $")
+                c2.metric("SALDO FINAL SPY", f"{cap_bench.iloc[-1]:,.2f} $", delta=f"{cap_bench.iloc[-1] - cap_inicial:,.2f} $")
+
+    # --- TAB 8: TEAR SHEETS / REPORTES ---
+    with tab_report:
+        st.markdown("### GENERACION DE TEAR SHEETS INSTITUCIONALES")
+        st.markdown("Exporta la analítica matemática de esta sesión en un informe sintético para clientes.")
+        
+        if st.button("GENERAR INFORME MATRICIAL", type="primary"):
+            report_md = f"""# TEAR SHEET INSTITUCIONAL (QUANT ENGINE)
+**Fecha de Generación:** {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}
+**Universo de Activos:** {', '.join(valid_tickers)}
+**Tasa Libre Riesgo:** {RISK_FREE_RATE*100}%
+
+## 1. RENDIMIENTOS Y DISPERSION DE RIESGO
+(Métricas Anualizadas en el periodo temporal extraído)
+
+"""
+            for tk in valid_tickers:
+                ret = df_close[tk].pct_change().dropna()
+                if not ret.empty:
+                    ann_ret = ret.mean() * 252 * 100
+                    ann_vol = ret.std() * np.sqrt(252) * 100
+                    report_md += f"- **{tk}**: Retorno Esperado **{ann_ret:.2f}%** | Volatilidad Asumida **{ann_vol:.2f}%**\n"
+                
+            report_md += """
+---
+*Generado de forma automática por el Motor de Series Temporales (Investing Decisions Quant Engine).*
+*Exención de Responsabilidad: Modelos cuantitativos pasados no garantizan retornos macroeconógicos futuros.*
+"""
+            st.download_button("📥 DESCARGAR INFORME (.MD FORMATO WEB/DOC)", data=report_md.encode('utf-8'), file_name="Quant_Tear_Sheet.md", mime="text/markdown")
+
+    # --- TAB 9: AUDITORIA DATOS ---
     with tab_data:
-        st.markdown("### PIPELINE EXPORTACION E INSPECCION DE DATOS MATRICIALES (CSV)")
+        st.markdown("### PIPELINE EXPORTACION E INSPECCION DE DATOS (CSV)")
         st.dataframe(df_close.sort_index(ascending=False).head(150).style.format("{:.2f} $"), use_container_width=True)
         st.download_button(
             label="DESCARGAR TENSOR DE DATOS (CSV PURIFICADO)",
             data=df_close.to_csv(index=True).encode('utf-8'),
             file_name="quants_historical_database.csv",
-            mime="text/csv",
-            type="primary"
+            mime="text/csv"
         )
 
 if __name__ == "__main__":
