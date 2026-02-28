@@ -240,6 +240,11 @@ def interpret_tecnico(df: pd.DataFrame, ticker: str):
     # Nivel 2: Analisis Detallado
     with st.expander("METODOLOGIA Y ANALISIS MULTIFACTORIAL DETALLADO"):
         st.markdown(f"""
+        **🎯 TRADUCCION PRACTICA:**
+        > *Básicamente, la acción {'está por encima de su precio medio sano y es un buen momento de mercado' if ult_close > ult_sma else 'está cayendo en picado por debajo de su media temporal, comprar ahora es peligroso e ir contra corriente'}. El indicador RSI nos chiva que el miedo/codicia está {'muy inflado (posible caída inminente)' if rsi > 70 else 'en pánico vendedor (podría rebotar arriba)' if rsi < 30 else 'en niveles sanos y normales'}.*
+        
+        <hr>
+
         **Fundamentos Matemáticos del Sesgo Direccional:**
         El cruce de la cotización actual (`{ult_close:.2f}`) sobre la Simple Moving Average de 50 periodos (`{ult_sma:.2f}`) 
         es monitoreado como un proxy algorítmico del consenso de los participantes institucionales. 
@@ -272,6 +277,11 @@ def interpret_institucional(res: dict, ticker: str):
     # Nivel 2: Analisis Detallado
     with st.expander("ANATOMIA PARAMETRICA CAPM Y RIESGO SISTEMICO (DEEP DIVE)"):
         st.markdown(f"""
+        **🎯 TRADUCCION PRACTICA:**
+        > *Este módulo evalúa la "calidad real" de esta inversión comparada con no hacer nada (Letras del Tesoro). Un Sharpe mayor a 1.0 significa que el estrés de estar invertido compensa sobradamente. El Alpha indica si la acción sube por mérito propio (producto/gestión) o solo porque todo el mercado global empuja. La Beta te indica la agresividad: Si es > 1, es una montaña rusa; si es < 1, es un refugio seguro.*
+        
+        <hr>
+
         **Capital Asset Pricing Model (CAPM):**
         Evaluación del constructo de riesgo frente al Benchmark asumiendo una Tasa Libre de Riesgo del `{RISK_FREE_RATE*100}%`.
         
@@ -298,6 +308,11 @@ def interpret_markowitz(weights, tickers):
         # Nivel 2: Analisis Detallado
         with st.expander("FUNDAMENTOS MATEMATICOS Y MATRIZ DE COVARIANZA (METODO SLSQP)"):
             st.markdown(f"""
+            **🎯 TRADUCCION PRACTICA:**
+            > *Ray Dalio dice que la diversificación es el único "almuerzo gratis" en las finanzas. La Inteligencia Artificial de este módulo analiza cómo se mueven las acciones entre sí. Si una cae, la otra debería subir para protegerte. El motor ha simulado de fondo miles de combinaciones (los miles de puntos de la gráfica debajo de la curva) y te está entregando la mezcla (porcentajes) EXACTA y estadísticamente imbatible para ganar el máximo dinero asumiendo el menor riesgo posible hoy.*
+            
+            <hr>
+
             **Hipótesis del Mercado Eficiente y Target SLSQP:**
             El algoritmo de optimización cuadrática computa la frontera eficiente minimizando la varianza global del vector de retornos 
             con una restricción de suma ponderada igual estricta. La preponderancia algorítmica sobre **{top_ticker}** obedece a una ratio de covarianza estructuralmente negativa frente a los sub-componentes colindantes, garantizando teóricamente máxima retribución por unidad de riesgo sistémico absorbida (Plena Maximización Paramétrica de Sharpe).
@@ -315,6 +330,11 @@ def interpret_oraculo(simulations: np.ndarray, var_95: float):
     # Nivel 2: Analisis Detallado
     with st.expander("ARQUITECTURA DEL METODO MONTE CARLO Y DISTRIBUCION LOG-NORMAL (VAR LIMITS)"):
         st.markdown(f"""
+        **🎯 TRADUCCION PRACTICA:**
+        > *Nadie tiene una bola de cristal para predecir el futuro exacto. En su lugar, hemos simulado matemáticamente las matemáticas del precio creando 500 "multiversos" o mundos paralelos a un año vista. La línea central te dice la gravitación normal de hacia dónde va el precio. Además, el VAR al 95% te avisa claramente de cuánto es el límite estadístico de dinero que podrías perder de golpe en tu peor día si los mercados colapsan.*
+        
+        <hr>
+
         **Dinámica de Movimiento Browniano Simple:**
         Para la computación de los trayectos sintéticos (n=500 iteraciones a t=252), se asume que los retornos compuestos continuos siguen empíricamente una distribución Normal paramétrica. Mediante simulación computacional derivamos intervalos empíricos de confianza:
         
@@ -337,15 +357,15 @@ def main():
         st.markdown("<hr>", unsafe_allow_html=True)
         
         st.markdown("#### CONFIGURACION DE ACTIVOS")
-        tickers_input = st.text_input("Ingesta de Tickers (CSV format)", value="SPY, AAPL, MSFT, BRK-B, TLT")
+        tickers_input = st.text_input("Ingesta de Tickers (CSV format)", value="SPY, AAPL, MSFT, BRK-B, TLT", help="Símbolos de empresas a estudiar, separados por coma. MSFT = Microsoft. AAPL = Apple.")
         
         st.markdown("#### HORIZONTE TEMPORAL")
         col_d1, col_d2 = st.columns(2)
-        with col_d1: start_date = st.date_input("INICIO", value=pd.to_datetime('2023-01-01'))
-        with col_d2: end_date = st.date_input("FIN", value=pd.to_datetime('today'))
+        with col_d1: start_date = st.date_input("INICIO", value=pd.to_datetime('2023-01-01'), help="Día en el que empezamos a recolectar datos pasados.")
+        with col_d2: end_date = st.date_input("FIN", value=pd.to_datetime('today'), help="Último día a analizar (normalmente, hoy).")
         
         st.markdown("#### PARAMETROS DE RIESGO")
-        risk_free_val = st.number_input("TASA LIBRE DE RIESGO (Rf %)", value=4.0, step=0.1)
+        risk_free_val = st.number_input("TASA LIBRE DE RIESGO (Rf %)", value=4.0, step=0.1, help="Rendimiento de los bonos seguros de Gobierno. Si el banco te da un 4% seguro, invertir en bolsa debe exigirte dar MÁS de ese 4% para que merezca el riesgo.")
         global RISK_FREE_RATE
         RISK_FREE_RATE = risk_free_val / 100.0
         
@@ -388,6 +408,15 @@ def main():
         c_head.markdown("### INSPECCION DE PRECIO Y MOMENTUM ESTRUCTURAL")
         ticker_tec = c_select.selectbox("SELECCIONAR ACTIVO BASE:", valid_tickers, label_visibility="collapsed")
         
+        with st.expander("GUIA REPTILIANA DE LECTURA GRAFICA (PASO A PASO PARA PRINCIPAIANTES) 👇"):
+            st.markdown("""
+            **Si nunca has abierto la bolsa, así es como debes traducir este panel institucional:**
+            *   **Los Rectángulos (Velas):** Muestran el rastro de la pelea diaria. Si el trazo es brillante/claro, la jornada acabó en beneficios (fuerza de compra). Si es negro/oscuro, la jornada cayó (miedo). 
+            *   **La Línea Azul Fiel (Media Móvil 50):** Es la frontera central. Cuando el precio baila **por encima** de esa línea azul, estamos en una bonanza alcista segura. Si rompe el cristal de la línea hacia abajo, se inicia zona de peligro estructural.
+            *   **Las Barras Inferiores (Volumen):** Representa el "dinero institucional" en juego. Un movimiento brusco que no acompañe barras atlas significa que nadie se fía. Movimientos fuertes con barras altas son confirmaciones fiables.
+            *   **Termómetro RSI (La línea ondulante):** Detecta los extremos humanos. Si la línea se rompe y vuela por encima del techo (70), los compradores están en euforia maníaca (puede venirse un estallido, sobrecompra). Si se entierra por el suelo (<30), hay pánico inyectado, la acción está barata y el rebote acecha (sobreventa).
+            """)
+
         df_tec = calculate_technical_indicators(df_close[ticker_tec])
         
         has_ohlcv = ('Open' in raw_data.columns and 'Volume' in raw_data.columns)
