@@ -768,16 +768,33 @@ def main():
 """
             st.download_button("📥 DESCARGAR INFORME (.MD FORMATO WEB/DOC)", data=report_md.encode('utf-8'), file_name="Quant_Tear_Sheet.md", mime="text/markdown")
 
-    # --- TAB 9: AUDITORIA DATOS ---
+    # --- TAB 9: AUDITORIA DATOS Y EXPORTACION MASTER ---
     with tab_data:
-        st.markdown("### PIPELINE EXPORTACION E INSPECCION DE DATOS (CSV)")
+        st.markdown("### EXPORTACIÓN DEL TENSOR DATALAKE")
+        st.markdown("Selecciona el formato de renderizado para exportar los miles de puntos matriciales de este análisis a tu software externo.")
         st.dataframe(df_close.sort_index(ascending=False).head(150).style.format("{:.2f} $"), use_container_width=True)
-        st.download_button(
-            label="DESCARGAR TENSOR DE DATOS (CSV PURIFICADO)",
-            data=df_close.to_csv(index=True).encode('utf-8'),
-            file_name="quants_historical_database.csv",
-            mime="text/csv"
-        )
+        
+        c1, c2, c3 = st.columns([1,1,2])
+        with c1:
+            st.download_button(
+                label="DESCARGAR TENSOR (CSV)",
+                data=df_close.to_csv(index=True).encode('utf-8'),
+                file_name="quants_historical_database.csv",
+                mime="text/csv"
+            )
+        with c2:
+            import io
+            buffer = io.BytesIO()
+            with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+                df_close.to_excel(writer, sheet_name='Historical_Prices')
+            excel_data = buffer.getvalue()
+            st.download_button(
+                label="DESCARGAR MASTER (.XLSX)",
+                data=excel_data,
+                file_name="Aura_Wealth_DataLake.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                type="primary"
+            )
 
 if __name__ == "__main__":
     main()
