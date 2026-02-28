@@ -199,7 +199,9 @@ def clean_layout(fig, title="", height=400):
         template='plotly_dark', height=height, 
         paper_bgcolor=COLOR_BG, plot_bgcolor=COLOR_BG,
         margin=dict(t=40, l=10, r=10, b=10),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(color='#64748B'))
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(color='#64748B')),
+        hovermode="x unified",
+        hoverlabel=dict(bgcolor="#1E293B", font_size=13, font_family="Inter", bordercolor="#475569")
     )
     # Eliminacion de gridlines
     fig.update_xaxes(showgrid=False, zerolinecolor=COLOR_DARK_SMOKE, tickfont=dict(color='#64748B'))
@@ -353,62 +355,63 @@ def main():
     st.markdown("<p style='color:#64748B; font-size:1.0rem; letter-spacing:0.05em; text-transform:uppercase;'>Infraestructura propietaria de análisis sistemático y modelado de riesgo.</p>", unsafe_allow_html=True)
     
     with st.sidebar:
-        st.markdown("<h3>PARAMETROS DE ENTORNO</h3>", unsafe_allow_html=True)
-        st.markdown("<hr>", unsafe_allow_html=True)
-        
-        st.markdown("#### CONFIGURACION DE ACTIVOS")
-        
-        tickers_selected = []
-        with st.expander("🌍 BASE DE DATOS GLOBAL DE ACTIVOS", expanded=True):
-            st.markdown("**🇺🇸 USA: TECNOLOGÍA E IA (Nasdaq)**")
-            us_tech = st.multiselect("Big Tech & Semiconductores", 
-                ["AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "META", "TSLA", "AVGO", "CRM", "AMD", "ADBE", "NFLX", "CSCO", "INTC", "QCOM", "IBM", "ORCL", "NOW"], 
-                default=["AAPL", "MSFT"], help="Gigantes tecnológicos y arquitectos de Inteligencia Artificial.")
+        with st.form("filtros_globales", clear_on_submit=False):
+            st.markdown("<h3>PARAMETROS DE ENTORNO</h3>", unsafe_allow_html=True)
+            st.markdown("<hr>", unsafe_allow_html=True)
             
-            st.markdown("**🇺🇸 USA: VALOR, FINANZAS Y SALUD (S&P 500)**")
-            us_fin = st.multiselect("Banca, Consumo y Farma", 
-                ["JPM", "V", "MA", "BAC", "WFC", "GS", "MS", "BRK-B", "JNJ", "UNH", "LLY", "ABBV", "MRK", "PFE", "PG", "KO", "PEP", "WMT", "COST", "HD", "MCD", "DIS", "NKE"], 
-                default=[], help="Bancos de Wall Street y gigantes defensivos de la vieja economía.")
+            st.markdown("#### CONFIGURACION DE ACTIVOS")
             
-            st.markdown("**🇪🇺 EUROPA Y ESPAÑA (EuroStoxx & IBEX 35)**")
-            eu_stocks = st.multiselect("Gran Capitalización Europea", 
-                ["ASML", "SAP", "SIE.DE", "MC.PA", "AIR.PA", "OR.PA", "SAN.MC", "BBVA.MC", "IBE.MC", "ITX.MC", "REP.MC", "TEF.MC", "CABK.MC", "AENA.MC", "FER.MC"], 
-                default=[], help="Industria del lujo, matriz de microchips europea y pesos pesados españoles (Añaden el sufijo .MC, .PA, .DE)")
+            tickers_selected = []
+            with st.expander("🌍 BASE DE DATOS GLOBAL DE ACTIVOS", expanded=True):
+                st.markdown("**🇺🇸 USA: TECNOLOGÍA E IA (Nasdaq)**")
+                us_tech = st.multiselect("Big Tech & Semiconductores", 
+                    ["AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "META", "TSLA", "AVGO", "CRM", "AMD", "ADBE", "NFLX", "CSCO", "INTC", "QCOM", "IBM", "ORCL", "NOW"], 
+                    default=["AAPL", "MSFT"], help="Gigantes tecnológicos y arquitectos de Inteligencia Artificial.")
+                
+                st.markdown("**🇺🇸 USA: VALOR, FINANZAS Y SALUD (S&P 500)**")
+                us_fin = st.multiselect("Banca, Consumo y Farma", 
+                    ["JPM", "V", "MA", "BAC", "WFC", "GS", "MS", "BRK-B", "JNJ", "UNH", "LLY", "ABBV", "MRK", "PFE", "PG", "KO", "PEP", "WMT", "COST", "HD", "MCD", "DIS", "NKE"], 
+                    default=[], help="Bancos de Wall Street y gigantes defensivos de la vieja economía.")
+                
+                st.markdown("**🇪🇺 EUROPA Y ESPAÑA (EuroStoxx & IBEX 35)**")
+                eu_stocks = st.multiselect("Gran Capitalización Europea", 
+                    ["ASML", "SAP", "SIE.DE", "MC.PA", "AIR.PA", "OR.PA", "SAN.MC", "BBVA.MC", "IBE.MC", "ITX.MC", "REP.MC", "TEF.MC", "CABK.MC", "AENA.MC", "FER.MC"], 
+                    default=[], help="Industria del lujo, matriz de microchips europea y pesos pesados españoles (Añaden el sufijo .MC, .PA, .DE)")
 
-            st.markdown("**� ASIA Y MERCADOS EMERGENTES**")
-            asia_latam = st.multiselect("Dragones Asiáticos y LATAM", 
-                ["TSM", "BABA", "JD", "BIDU", "7203.T", "6758.T", "9984.T", "005930.KS", "VALE", "PBR", "MELI", "NU"], 
-                default=[], help="Semiconductores de Taiwan, Ecommerce Chino, gigantes Japoneses (Toyota/Sony) y unicornios de Latam.")
-            
-            st.markdown("**🛢️ MATERIAS PRIMAS Y MACRO (ETFs)**")
-            macro_etf = st.multiselect("Oro, Petróleo, Bonos e Índices", 
-                ["SPY", "QQQ", "DIA", "IWM", "EFA", "EEM", "TLT", "IEF", "GLD", "SLV", "USO", "UNG", "UUP", "VIXY"], 
-                default=["SPY", "TLT"], help="SPY=S&P500, QQQ=Nasdaq, TLT=Bonos 20 años, GLD=Oro Físico, USO=Petróleo Crudo.")
+                st.markdown("**🌏 ASIA Y MERCADOS EMERGENTES**")
+                asia_latam = st.multiselect("Dragones Asiáticos y LATAM", 
+                    ["TSM", "BABA", "JD", "BIDU", "7203.T", "6758.T", "9984.T", "005930.KS", "VALE", "PBR", "MELI", "NU"], 
+                    default=[], help="Semiconductores de Taiwan, Ecommerce Chino, gigantes Japoneses (Toyota/Sony) y unicornios de Latam.")
+                
+                st.markdown("**🛢️ MATERIAS PRIMAS Y MACRO (ETFs)**")
+                macro_etf = st.multiselect("Oro, Petróleo, Bonos e Índices", 
+                    ["SPY", "QQQ", "DIA", "IWM", "EFA", "EEM", "TLT", "IEF", "GLD", "SLV", "USO", "UNG", "UUP", "VIXY"], 
+                    default=["SPY", "TLT"], help="SPY=S&P500, QQQ=Nasdaq, TLT=Bonos 20 años, GLD=Oro Físico, USO=Petróleo Crudo.")
 
-            st.markdown("**🪙 CRIPTOACTIVOS (Top Market Cap)**")
-            crypto = st.multiselect("Ecosistema Blockchain", 
-                ["BTC-USD", "ETH-USD", "SOL-USD", "BNB-USD", "XRP-USD", "ADA-USD", "AVAX-USD", "DOGE-USD", "DOT-USD", "LINK-USD", "MATIC-USD", "LTC-USD"], 
-                default=[], help="Activos digitales que cotizan 24/7 de estrés algorítmico extremo.")
+                st.markdown("**🪙 CRIPTOACTIVOS (Top Market Cap)**")
+                crypto = st.multiselect("Ecosistema Blockchain", 
+                    ["BTC-USD", "ETH-USD", "SOL-USD", "BNB-USD", "XRP-USD", "ADA-USD", "AVAX-USD", "DOGE-USD", "DOT-USD", "LINK-USD", "MATIC-USD", "LTC-USD"], 
+                    default=[], help="Activos digitales que cotizan 24/7 de estrés algorítmico extremo.")
+                
+                st.markdown("**🛠️ CAJA FUERTE: CUALQUIER OTRA EMPRESA DEL MUNDO**")
+                custom_tickers = st.text_input("Buscador Libre (Tickers Manuales)", value="", placeholder="Ej: F, GM, PLTR, RKLB, RIVN", help="Hay más de 60.000 acciones en el mundo. Si no está en las listas rápidas de arriba, escribe aquí su 'Ticker' de Yahoo Finance separado por comas.")
+                
+                tickers_selected.extend(us_tech + us_fin + eu_stocks + asia_latam + macro_etf + crypto)
+                if custom_tickers:
+                    tickers_selected.extend([t.strip().upper() for t in custom_tickers.split(',') if t.strip()])
             
-            st.markdown("**🛠️ CAJA FUERTE: CUALQUIER OTRA EMPRESA DEL MUNDO**")
-            custom_tickers = st.text_input("Buscador Libre (Tickers Manuales)", value="", placeholder="Ej: F, GM, PLTR, RKLB, RIVN", help="Hay más de 60.000 acciones en el mundo. Si no está en las listas rápidas de arriba, escribe aquí su 'Ticker' de Yahoo Finance separado por comas.")
+            st.markdown("#### HORIZONTE TEMPORAL")
+            col_d1, col_d2 = st.columns(2)
+            with col_d1: start_date = st.date_input("INICIO", value=pd.to_datetime('2023-01-01'), help="Día en el que empezamos a recolectar datos pasados.")
+            with col_d2: end_date = st.date_input("FIN", value=pd.to_datetime('today'), help="Último día a analizar (normalmente, hoy).")
             
-            tickers_selected.extend(us_tech + us_fin + eu_stocks + asia_latam + macro_etf + crypto)
-            if custom_tickers:
-                tickers_selected.extend([t.strip().upper() for t in custom_tickers.split(',') if t.strip()])
-        
-        st.markdown("#### HORIZONTE TEMPORAL")
-        col_d1, col_d2 = st.columns(2)
-        with col_d1: start_date = st.date_input("INICIO", value=pd.to_datetime('2023-01-01'), help="Día en el que empezamos a recolectar datos pasados.")
-        with col_d2: end_date = st.date_input("FIN", value=pd.to_datetime('today'), help="Último día a analizar (normalmente, hoy).")
-        
-        st.markdown("#### PARAMETROS DE RIESGO")
-        risk_free_val = st.number_input("TASA LIBRE DE RIESGO (Rf %)", value=4.0, step=0.1, help="Rendimiento de los bonos seguros de Gobierno. Si el banco te da un 4% seguro, invertir en bolsa debe exigirte dar MÁS de ese 4% para que merezca el riesgo.")
-        global RISK_FREE_RATE
-        RISK_FREE_RATE = risk_free_val / 100.0
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        run_btn = st.button("INICIALIZAR MOTOR Y COMPILAR DATOS", type="primary", use_container_width=True)
+            st.markdown("#### PARAMETROS DE RIESGO")
+            risk_free_val = st.number_input("TASA LIBRE DE RIESGO (Rf %)", value=4.0, step=0.1, help="Rendimiento de los bonos seguros de Gobierno. Si el banco te da un 4% seguro, invertir en bolsa debe exigirte dar MÁS de ese 4% para que merezca el riesgo.")
+            global RISK_FREE_RATE
+            RISK_FREE_RATE = risk_free_val / 100.0
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            run_btn = st.form_submit_button("INICIALIZAR MOTOR Y COMPILAR DATOS", type="primary", use_container_width=True)
 
     if run_btn or "df_close" in st.session_state:
         tickers_list = list(set(tickers_selected)) # Remove duplicates automatically
@@ -426,6 +429,9 @@ def main():
             st.session_state["df_close"] = df_close
             st.session_state["raw_data"] = raw_data
             st.session_state["valid_tickers"] = [t for t in tickers_list if t in df_close.columns]
+            
+            if run_btn:
+                st.toast("✅ Motor Cuantitativo Iniciado. Tensor de datos vectorizado con éxito.")
 
     if "df_close" not in st.session_state:
         st.info("SISTEMA EN ESPERA. COMPLETE LA CONFIGURACION PARALELA Y ACTIVE EL MOTOR PARA DESPLIEGUE.")
@@ -580,7 +586,7 @@ def main():
     # --- TAB 5: AUDITORIA DATOS ---
     with tab_data:
         st.markdown("### PIPELINE EXPORTACION E INSPECCION DE DATOS MATRICIALES (CSV)")
-        st.dataframe(df_close.sort_index(ascending=False).head(150), use_container_width=True)
+        st.dataframe(df_close.sort_index(ascending=False).head(150).style.format("{:.2f} $"), use_container_width=True)
         st.download_button(
             label="DESCARGAR TENSOR DE DATOS (CSV PURIFICADO)",
             data=df_close.to_csv(index=True).encode('utf-8'),
