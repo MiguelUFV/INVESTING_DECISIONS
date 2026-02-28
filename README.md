@@ -1,36 +1,65 @@
-# TERMINAL DE INTELIGENCIA FINANCIERA (QUANT ENGINE)
+# 🌐 AURA WEALTH OS (Quantitative Terminal)
 
-Plataforma institucional de análisis exploratorio, simulación estocástica de riesgos y modelado algorítmico basado en Teoría Moderna de Carteras (Harry Markowitz) y matemáticas financieras cuantitativas (CAPM, Value At Risk).
+**Aura Wealth OS** es una infraestructura SaaS *Next-Gen* de análisis algorítmico, gestión de carteras y proyecciones de riesgo asimétrico. Diseñada con estándares de grado institucional (Hedge Funds) para inversores que requieren una aproximación táctica, visual y matemáticamente estricta a los mercados financieros globales.
 
-## ARQUITECTURA DEL SISTEMA 
+---
 
-El entorno ha sido estrictamente diseñado bajo el paradigma de interfaces de fondos de cobertura y terminales profesionales (arquitectura *Dark Form*, Blue Cobalt / Smoke aesthetics), priorizando la ingesta de datos en tiempo real (Real-Time API) y la purificación estadística del ruido del mercado mediante módulos interactivos de *Click-to-Expand Insight Engine*.
+## 🏛️ Arquitectura del Sistema
 
-### MODULOS ESTRUCTURALES
+La plataforma está diseñada íntegramente en Python utilizando el paradigma de arquitecturas monolíticas reactivas de datos:
 
-1. **ANALISIS TECNICO Y MOMENTUM:** Análisis estructural interactivo del precio superponiendo directrices móviles críticas (SMA-50) e indicadores rezagados de comportamiento oscilante (RSI 14 y divergencias MACD) bajo esquemas lógicos sin ruido visual de fondo.
-2. **METRICAS DE RIESGO DE MERCADO (CAPM):** Auditoría paramétrica frente al Benchmark (SPY) desplegando dinámicamente el rendimiento anualizado ajustado (Sharpe Ratio), coeficientes de asimetría direccional (Beta Sistémica) y extracción algorítmica de valor exógeno (Alpha de Jensen). Analítica complementada con medición estricta de exposiciones pasadas (*Underwater Drawdown*).
-3. **OPTIMIZACION MATRICIAL DE MARKOWITZ:** Construcción topológica en tiempo real de la frontera eficiente por medio del optimizador cuadrático SLSQP iterativo sobre la Matriz de Autocorrelación de los retornos (Covarianzas Negativas) para despejar el vector de pesos que maximiza paramétricamente la compensación estadística Riesgo-Beneficio.
-4. **PROYECCION ESTOCASTICA Y CONVERGENCIA (VAR):** Compilación sintética masiva usando simulación de Monte Carlo (Caminata Browniana Aleatoria, 500 n / 252 t) sobre distribución log-normal asintótica, parametrizando dinámicamente las bandas de confianza de los percentiles p95 y p05, y extrayendo el *Value at Risk (VaR)* algorítmico frente a desintegración inopinada del capital.
-5. **PIPELINE DE EXTRACCION PURIFICADA:** Extracción íntegra y renderizado de la base de datos descargada libre de lagunas temporales para exportación final mediante CSV crudo a gestores de portafolio o ingesta algorítmica externa.
+- **Frontend / Motor UI:** Interfaz construida sobre **Streamlit** modificada visualmente con CSS inyectado puro (Glassmorphism, Radial Gradients). Formularios asíncronos para evitar recargas excesivas y gestión de renderizado de alto contraste.
+- **Data Lake Connector (ETL en Vivo):** Conector Web Scraper y API directa contra `yfinance` para extracción de Series Temporales intradiarias, Fundamentales Corporativos (Márgenes, PER, Cap) y Feed de Noticias propietarias de **Reuters/Bloomberg**.
+- **Backend Cuantitativo:** Pipeline de tensores matemáticos y vectorizados (`NumPy` + `Pandas`) para la rápida síntesis de matrices de covarianza cruzada en menos de <200ms de latencia.
+- **Pipeline de Reportes:** Generador dinámico en formato Markdown (`.md`) para Tear Sheets Institucionales y exportador en memoria I/O hacia `.xlsx` (Excel) con parseo `openpyxl`.
 
-## REQUIREMENTOS DE INFRAESTRUCTURA
+---
 
-El motor corre enteramente sobre Python procesando cálculos optimizados de vectorización en local a partir de la API de *YFinance*.
+## 🧮 Modelos Matemáticos
 
-*   `streamlit==1.36.0` (Motor de Interfaz Reactiva y Estado)
-*   `pandas` / `numpy` (Manipulación Tensorial Matricial Lineal)
-*   `scipy.optimize` (Optimizador Paramétrico SLSQP)
-*   `plotly` (Renderizado de Motores Gráficos en GPU del navegador, sin *Gridlines*)
-*   `yfinance` (Gateway a la Ingesta Temporal Externa)
+Aura implementa funciones financieras bajo los tres grandes marcos teóricos del *Quantitative Finance*:
 
-## DESPLIEGUE Y COMPILACION
+### 1. Modelo de Valoración de Activos (CAPM)
+La plataforma mide el Factor de Riesgo inherente de cada posición iterado contra un Benchmark global (S&P 500).
+- **Ratio de Sharpe:** Rentabilidad excedentaria asumiendo la Tasa Libre de Riesgo (Rf) penalizada por la Volatilidad Histórica (Desviación Estándar Anual).
+- **Alpha de Jensen y Beta:** Diferenciación entre el Retorno del Mercado (Exposición Pasiva Sistémica) y el Valor Pila Absoluto (Habilidad del portfolio o activo para batir al mercado con menor riesgo direccional).
 
+### 2. Teoría Moderna de Carteras (Harry Markowitz)
+Implementación nativa del solucionador no lineal de `SciPy Minimize` (Método SLSQP) para encontrar el vértice absoluto de la **Frontera Eficiente**.
+La plataforma calcula la matriz matemática de *Varianza-Covarianza* y dictamina la ponderación percentil teórica exacta que cada acción debe tener en el portafolio total para maximizar retornos destruyendo la volatilidad cruzada (correlación).
+
+### 3. Proyecciones Estocásticas (Monte Carlo & VaR)
+Proyección de caminos aleatorios que usan derivadas de dispersión para simular la degradación o crecimiento a 12 meses vista.
+- **Value at Risk (VaR 95%):** El algoritmo advierte directamente del riesgo de *ruina* o máxima pérdida estadística probable en términos de porcentaje de capital para el siguiente impacto de peor caso en el mercado.
+
+---
+
+## 🚀 Instrucciones de Despliegue (Nube y Local)
+
+La aplicación está completamente aislada de la máquina anfitriona y está lista para despliegues Continuos (CI/CD) tanto en infraestructuras Cloud ligeras (Streamlit Cloud) como mediante contenedores absolutos (Render, Railway, AWS ECS).
+
+### A. Despliegue en Render (Recomendado vía Docker)
+El repositorio cuenta con un `Dockerfile` optimizado (Python 3.10-slim) de muy bajo peso de RAM para instancias gratuitas o Micro-Instancias.
+1. Haz **Fork** o clon de este repositorio en GitHub.
+2. Inicia sesión en **Render.com** > Nuevo *Web Service*.
+3. Enlaza tu GitHub y elige este repositorio.
+4. Renderizará automáticamente detectando el `Dockerfile`. 
+   *(Nota técnica: el Dockerfile ya ignora paquetes conflictivos Debian y define un `ENTRYPOINT` absoluto contra el `dashboard_financiero.py` exponiendo el puerto 8501).*
+5. Espera al Build y pulsa el Botón **Live**. Listo.
+
+### B. Despliegue Instantáneo en Streamlit Community Cloud
+Si no deseas manejar contenedores, Streamlit Community Cloud es nativo:
+1. Dirígete a [share.streamlit.io](https://share.streamlit.io).
+2. Haz "New App" y selecciona la rama principal (`main`) de este repositorio de GitHub.
+3. Rellena *"Main file path"* con `dashboard_financiero.py`.
+4. El sistema autodetectará el archivo `requirements.txt` y lo levantará en línea.
+
+### C. Instalación Local / Pruebas
+Si deseas trastear con los algoritmos y testear la respuesta en tu máquina personal:
 ```bash
-#  Asegurar entorno (virtual environment / global) e inyectar dependencias 
+git clone https://github.com/migue/terminal_financiero.git
+cd terminal_financiero
 pip install -r requirements.txt
-
-# Disparar compilación del Servidor Interactivo de Datos
 streamlit run dashboard_financiero.py
 ```
-*NOTA: Se requiere conectividad web pasante sin restricciones de firewall corporativo que bloqueen puertos 443 a los servidores raw históricos de Yahoo Finance.*
+*(El navegador se abrirá en localhost:8501 automáticamente).*
