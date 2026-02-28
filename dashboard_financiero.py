@@ -26,81 +26,125 @@ st.set_page_config(
 # --- CSS PREMIUM FINTECH (Glassmorphism & Gradients) ---
 st.markdown("""
 <style>
+    /* Ocultar elementos nativos de Streamlit para parecer una Web App real */
+    #MainMenu {visibility: hidden;}
+    header {visibility: hidden !important;}
+    footer {visibility: hidden;}
+    .streamlit-footer {display: none;}
+    
     /* Fondo Moderno Radial Gradient */
     .stApp { 
-        background: radial-gradient(circle at top right, #1E1B4B 0%, #0F172A 40%, #020617 100%);
+        background: radial-gradient(circle at top right, #1E1B4B 0%, #0F172A 50%, #020617 100%);
         background-attachment: fixed;
         color: #E2E8F0; 
         font-family: 'Inter', 'Segoe UI', Helvetica, sans-serif; 
     }
+    
     /* Estilos para titulos con gradientes premium */
-    h1 {
-        background: -webkit-linear-gradient(45deg, #38BDF8, #818CF8);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-weight: 800 !important;
+    h1, h2, h3, h4 {
+        color: #F8FAFC !important; 
+        font-weight: 700 !important; 
         letter-spacing: -0.02em;
-        margin-bottom: 0.2rem;
     }
-    h2, h3, h4 { color: #F8FAFC !important; font-weight: 600 !important; letter-spacing: 0.02em; }
     
-    /* Layout Containers and Padding */
-    .block-container { padding-top: 2rem; padding-bottom: 4rem; max-width: 1600px; }
+    /* Layout Containers and Padding (Pegar más arriba) */
+    .block-container { padding-top: 1.5rem !important; padding-bottom: 4rem; max-width: 1600px; }
     
-    /* Sidebar con Efecto Cristal (Glassmorphism) */
+    /* Sidebar con Efecto Cristal (Glassmorphism) intenso */
     [data-testid="stSidebar"] { 
-        background: rgba(15, 23, 42, 0.6) !important;
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
+        background: rgba(11, 15, 25, 0.75) !important;
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
         border-right: 1px solid rgba(255, 255, 255, 0.05); 
     }
     
     /* Cards Modernas (Glassmorphism y Sombras Neón suaves) */
     div[data-testid="metric-container"] { 
-        background: rgba(30, 41, 59, 0.4);
+        background: linear-gradient(145deg, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.4) 100%);
         backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.08); 
+        border: 1px solid rgba(255, 255, 255, 0.05); 
         padding: 1.25rem; 
-        border-radius: 12px; 
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        border-radius: 16px; 
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     div[data-testid="metric-container"]:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
         border: 1px solid rgba(56, 189, 248, 0.3);
+        background: linear-gradient(145deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.6) 100%);
     }
     
-    div[data-testid="stMetricValue"] { font-size: 1.8rem !important; font-weight: 700; color: #FFFFFF; }
-    div[data-testid="stMetricLabel"] { font-size: 0.85rem; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+    div[data-testid="stMetricValue"] { font-size: 2rem !important; font-weight: 800; color: #FFFFFF; letter-spacing: -0.03em;}
+    div[data-testid="stMetricLabel"] { font-size: 0.8rem; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
     
-    /* Pestañas (Tabs) Estilo Navegador Premium */
+    /* Pestañas (Tabs) Estilo Navegador Premium tipo Pill Nav */
     .stTabs [data-baseweb="tab-list"] {
         gap: 8px;
+        background-color: rgba(15, 23, 42, 0.5);
+        padding: 6px;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.05);
+        backdrop-filter: blur(10px);
+        margin-bottom: 1rem;
     }
     .stTabs [data-baseweb="tab"] {
-        background-color: rgba(30, 41, 59, 0.3);
-        border-radius: 8px 8px 0 0;
+        background-color: transparent;
+        border-radius: 8px;
         padding: 10px 16px;
-        border: 1px solid transparent;
-        transition: background-color 0.2s ease;
+        border: none;
+        transition: all 0.3s ease;
+        color: #94A3B8;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+    .stTabs [data-baseweb="tab"]:hover {
+        color: #F8FAFC;
+        background-color: rgba(255, 255, 255, 0.05);
     }
     .stTabs [aria-selected="true"] {
-        background-color: rgba(56, 189, 248, 0.1);
-        border: 1px solid rgba(56, 189, 248, 0.3);
-        border-bottom: none;
+        background-color: rgba(56, 189, 248, 0.15) !important;
+        color: #38BDF8 !important;
+        border: 1px solid rgba(56, 189, 248, 0.3) !important;
+        box-shadow: 0 0 15px rgba(56, 189, 248, 0.1);
+    }
+    
+    /* Botones Globables (Efecto Hover Premium) */
+    .stButton > button {
+        border-radius: 8px !important;
+        border: 1px solid rgba(255,255,255,0.1) !important;
+        font-weight: 600 !important;
+        transition: all 0.2s ease !important;
+    }
+    .stButton > button:hover {
+        border-color: #38BDF8 !important;
+        color: #38BDF8 !important;
+        box-shadow: 0 0 12px rgba(56, 189, 248, 0.2) !important;
+        transform: translateY(-2px);
     }
     
     /* Expander override (Cajas Limpias) */
     .streamlit-expanderHeader {
         font-weight: 600 !important;
         color: #E2E8F0 !important;
-        background-color: rgba(30, 41, 59, 0.5) !important;
+        background-color: rgba(30, 41, 59, 0.4) !important;
         border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.05);
     }
     
-    hr { border-color: rgba(255,255,255,0.05) !important; }
+    hr { border-color: rgba(255,255,255,0.05) !important; margin: 1.5rem 0;}
+    
+    /* Text Inputs y Text Areas */
+    .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"] {
+        background-color: rgba(15, 23, 42, 0.6) !important;
+        border: 1px solid rgba(255,255,255,0.1) !important;
+        border-radius: 8px !important;
+        color: white !important;
+    }
+    .stTextInput input:focus, .stSelectbox div[data-baseweb="select"]:focus-within {
+        border-color: #38BDF8 !important;
+        box-shadow: 0 0 0 1px #38BDF8 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -407,8 +451,15 @@ def main():
         st.session_state.username = None
 
     if not st.session_state.authenticated:
-        st.markdown("<h1 style='text-align: center; margin-top: 10vh;'>🔒 AURA WEALTH OS</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color:#94A3B8;'>Portal de Autenticación Institucional</p>", unsafe_allow_html=True)
+        st.markdown("""
+        <div style="text-align: center; margin-top: 12vh; margin-bottom: 3rem;">
+            <div style="display:inline-block; padding: 1rem; background: rgba(56, 189, 248, 0.1); border-radius: 50%; margin-bottom: 1rem; border: 1px solid rgba(56, 189, 248, 0.2);">
+                <span style="font-size: 3rem;">⚡</span>
+            </div>
+            <h1 style="font-size: 4rem; letter-spacing: -0.05em; margin-bottom: 0; background: -webkit-linear-gradient(45deg, #38BDF8, #818CF8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">AURA WEALTH OS</h1>
+            <p style="color: #94A3B8; font-size: 1.2rem; font-weight: 400; letter-spacing: 0.02em;">Portal de Autenticación Institucional</p>
+        </div>
+        """, unsafe_allow_html=True)
         
         c1, c2, c3 = st.columns([1, 1.5, 1])
         with c2:
@@ -441,8 +492,25 @@ def main():
                             st.error("Las credenciales deben tener 3 o más caracteres.")
         return
 
-    st.markdown("<h1>AURA WEALTH OS (QUANT PLATFORM)</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='color:#94A3B8; font-size:1.1rem; letter-spacing:0.02em;'>Plataforma FinTech Next-Gen para Análisis Algorítmico y Retorno Absoluto.</p>", unsafe_allow_html=True)
+    # Header Principal Dashboard (Reemplaza el antiguo h1/p)
+    st.markdown("""
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 2rem; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(12px); border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 2rem; box-shadow: 0 4px 20px -2px rgba(0,0,0,0.2);">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <div style="height: 40px; width: 40px; background: linear-gradient(135deg, #38BDF8, #818CF8); border-radius: 10px; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);">
+                <span style="color: white; font-weight: 800; font-size: 1.2rem;">⚡</span>
+            </div>
+            <div>
+                <h1 style="margin: 0; padding: 0; font-size: 1.8rem; letter-spacing: -0.03em; color: white !important;">AURA WEALTH OS</h1>
+                <p style="margin: 0; padding: 0; color: #94A3B8; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;">Quantitative Fintech Engine v2.0</p>
+            </div>
+        </div>
+        <div style="text-align: right; display: flex; align-items: center; gap: 1rem;">
+            <div style="display: inline-block; padding: 0.4rem 1rem; border-radius: 20px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); color: #10B981; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em;">
+                🟢 LIVE MARKET DTLK
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
     
     with st.sidebar:
         st.markdown(f"**👤 Inversor Conectado:** `{st.session_state.username}`")
