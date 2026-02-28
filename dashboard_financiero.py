@@ -12,52 +12,97 @@ import logging
 
 # --- CONFIGURACION DE PAGINA ---
 st.set_page_config(
-    page_title="TERMINAL CUANTITATIVO INSTITUCIONAL",
+    page_title="AURA WEALTH OS | Next-Gen Platform",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# --- CSS INSTITUCIONAL (Dark Theme Absoluto & Tipografia) ---
+# --- CSS PREMIUM FINTECH (Glassmorphism & Gradients) ---
 st.markdown("""
 <style>
-    /* Reset and Typography: Fondo oscuro puro #0A0B10 solicitado */
-    .stApp { background-color: #0A0B10; color: #E2E8F0; font-family: 'Inter', 'Segoe UI', Helvetica, sans-serif; }
-    h1, h2, h3, h4 { color: #F8FAFC !important; font-weight: 600 !important; tracking: -0.01em; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    /* Fondo Moderno Radial Gradient */
+    .stApp { 
+        background: radial-gradient(circle at top right, #1E1B4B 0%, #0F172A 40%, #020617 100%);
+        background-attachment: fixed;
+        color: #E2E8F0; 
+        font-family: 'Inter', 'Segoe UI', Helvetica, sans-serif; 
+    }
+    /* Estilos para titulos con gradientes premium */
+    h1 {
+        background: -webkit-linear-gradient(45deg, #38BDF8, #818CF8);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 800 !important;
+        letter-spacing: -0.02em;
+        margin-bottom: 0.2rem;
+    }
+    h2, h3, h4 { color: #F8FAFC !important; font-weight: 600 !important; letter-spacing: 0.02em; }
     
     /* Layout Containers and Padding */
     .block-container { padding-top: 2rem; padding-bottom: 4rem; max-width: 1600px; }
     
-    /* Sidebar Styling */
-    [data-testid="stSidebar"] { border-right: 1px solid #1E293B; }
-    
-    /* Cards (Bordes sutiles y sombras suaves) */
-    div[data-testid="metric-container"] { 
-        background: #11141D; 
-        border: 1px solid #1E293B; 
-        padding: 1.25rem; 
-        border-radius: 4px; 
-        box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    /* Sidebar con Efecto Cristal (Glassmorphism) */
+    [data-testid="stSidebar"] { 
+        background: rgba(15, 23, 42, 0.6) !important;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-right: 1px solid rgba(255, 255, 255, 0.05); 
     }
     
-    div[data-testid="stMetricValue"] { font-size: 1.6rem !important; font-weight: 600; color: #F8FAFC; }
-    div[data-testid="stMetricLabel"] { font-size: 0.85rem; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500; }
+    /* Cards Modernas (Glassmorphism y Sombras Neón suaves) */
+    div[data-testid="metric-container"] { 
+        background: rgba(30, 41, 59, 0.4);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.08); 
+        padding: 1.25rem; 
+        border-radius: 12px; 
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    div[data-testid="metric-container"]:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(56, 189, 248, 0.3);
+    }
     
-    /* Expander override */
+    div[data-testid="stMetricValue"] { font-size: 1.8rem !important; font-weight: 700; color: #FFFFFF; }
+    div[data-testid="stMetricLabel"] { font-size: 0.85rem; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+    
+    /* Pestañas (Tabs) Estilo Navegador Premium */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        background-color: rgba(30, 41, 59, 0.3);
+        border-radius: 8px 8px 0 0;
+        padding: 10px 16px;
+        border: 1px solid transparent;
+        transition: background-color 0.2s ease;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: rgba(56, 189, 248, 0.1);
+        border: 1px solid rgba(56, 189, 248, 0.3);
+        border-bottom: none;
+    }
+    
+    /* Expander override (Cajas Limpias) */
     .streamlit-expanderHeader {
         font-weight: 600 !important;
-        color: #94A3B8 !important;
-        background-color: transparent !important;
+        color: #E2E8F0 !important;
+        background-color: rgba(30, 41, 59, 0.5) !important;
+        border-radius: 8px;
     }
     
-    hr { border-color: #1E293B !important; }
+    hr { border-color: rgba(255,255,255,0.05) !important; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- CONSTANTES GLOBALES Y COLORES INSTITUCIONALES ---
-COLOR_TREND = '#2563EB'      # Azul Cobalto para lineas de tendencia
+# --- CONSTANTES GLOBALES Y COLORES PREMIUM ---
+COLOR_TREND = '#38BDF8'      # Azul Cyan Esmeralda Brillante
 COLOR_BG = 'rgba(0,0,0,0)'
-COLOR_SMOKE = '#475569'      # Gris Humo
-COLOR_DARK_SMOKE = '#1E293B' 
+COLOR_SMOKE = '#818CF8'      # Indigo Suave
+COLOR_DARK_SMOKE = 'rgba(255,255,255,0.1)' 
 BENCHMARK_TICKER = 'SPY'
 RISK_FREE_RATE = 0.04
 
@@ -201,7 +246,7 @@ def clean_layout(fig, title="", height=400):
         margin=dict(t=40, l=10, r=10, b=10),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(color='#64748B')),
         hovermode="x unified",
-        hoverlabel=dict(bgcolor="#1E293B", font_size=13, font_family="Inter", bordercolor="#475569")
+        hoverlabel=dict(bgcolor="rgba(15, 23, 42, 0.9)", font_size=13, font_family="Inter", bordercolor="rgba(56, 189, 248, 0.5)")
     )
     # Eliminacion de gridlines
     fig.update_xaxes(showgrid=False, zerolinecolor=COLOR_DARK_SMOKE, tickfont=dict(color='#64748B'))
@@ -351,8 +396,8 @@ def interpret_oraculo(simulations: np.ndarray, var_95: float):
 # --- APLICACION PRINCIPAL ---
 
 def main():
-    st.markdown("<h1>TERMINAL DE INTELIGENCIA FINANCIERA (QUANT ENGINE)</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='color:#64748B; font-size:1.0rem; letter-spacing:0.05em; text-transform:uppercase;'>Infraestructura propietaria de análisis sistemático y modelado de riesgo.</p>", unsafe_allow_html=True)
+    st.markdown("<h1>AURA WEALTH OS (QUANT PLATFORM)</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='color:#94A3B8; font-size:1.1rem; letter-spacing:0.02em;'>Plataforma FinTech Next-Gen para Análisis Algorítmico y Retorno Absoluto.</p>", unsafe_allow_html=True)
     
     with st.sidebar:
         with st.form("filtros_globales", clear_on_submit=False):
