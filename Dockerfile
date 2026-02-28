@@ -12,11 +12,10 @@ ENV PYTHONUNBUFFERED 1
 # Crea y salta al directorio de infraestructura
 WORKDIR /app
 
-# Descarga dependencias a nivel de Sistema Operativo para computacion cuantica
-RUN apt-get update && apt-get install -y \
+# Descarga dependencias a nivel de Sistema Operativo
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
-    software-properties-common \
     && rm -rf /var/lib/apt/lists/*
 
 # Copia binarios de dependencia y pre-instala. Cero cache para menor peso del build
@@ -34,4 +33,4 @@ EXPOSE 8501
 HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
 
 # Al arrancar, enciende el Quantitative Engine en modo host 0.0.0.0 absoluto
-CMD ["streamlit", "run", "dashboard_financiero.py", "--server.port=8501", "--server.address=0.0.0.0"]
+ENTRYPOINT ["streamlit", "run", "dashboard_financiero.py", "--server.port=8501", "--server.address=0.0.0.0"]
