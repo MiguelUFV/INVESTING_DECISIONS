@@ -10,6 +10,12 @@ from scipy.stats import norm
 from scipy import stats
 import logging
 
+try:
+    from sklearn.ensemble import RandomForestRegressor
+    from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+except ImportError:
+    pass
+
 # --- CONFIGURACION DE PAGINA ---
 st.set_page_config(
     page_title="AURA WEALTH OS | Next-Gen Platform",
@@ -486,9 +492,9 @@ def main():
     valid_tickers = st.session_state["valid_tickers"]
     raw_data = st.session_state["raw_data"]
 
-    # --- 9 PESTANAS ESTRUCTURALES (EXPANSION SAAS) ---
-    tab_tec, tab_quant, tab_solver, tab_oraculo, tab_port, tab_fund, tab_backtest, tab_report, tab_data = st.tabs([
-        "TÉCNICO / MOMENTUM", "RIESGO (CAPM)", "MARKOWITZ", "MONTE CARLO (VaR)", "MI PORTAFOLIO", "MACRO & NOTICIAS", "BACKTESTER", "REPORTE PDF", "RAW DATA"
+    # --- 10 PESTANAS ESTRUCTURALES (EXPANSION SAAS + AI) ---
+    tab_tec, tab_quant, tab_solver, tab_oraculo, tab_port, tab_fund, tab_ai, tab_backtest, tab_report, tab_data = st.tabs([
+        "TÉCNICO / MOMENTUM", "RIESGO (CAPM)", "MARKOWITZ", "MONTE CARLO (VaR)", "MI PORTAFOLIO", "MACRO & NOTICIAS", "AI FORECASTING", "BACKTESTER", "REPORTE PDF", "RAW DATA"
     ])
 
     # --- TAB 1: DASHBOARD TECNICO + MACD/RSI ---
@@ -698,14 +704,112 @@ def main():
                     
                     st.markdown("#### TERMINAL DE NOTICIAS EN VIVO (BLOOMBERG/REUTERS FEED)")
                     if news:
-                        for n in news[:5]:
-                            st.markdown(f"📰 **[{n.get('title')}]({n.get('link')})** - *(Fuente: {n.get('publisher')})*")
+                        try:
+                            analyzer = SentimentIntensityAnalyzer()
+                            sentiments = []
+                            for n in news[:5]:
+                                title = n.get('title', '')
+                                compound = analyzer.polarity_scores(title)['compound']
+                                sentiments.append(compound)
+                                
+                                if compound >= 0.05:
+                                    s_badge = "🟢 BULLISH"
+                                elif compound <= -0.05:
+                                    s_badge = "🔴 BEARISH"
+                                else:
+                                    s_badge = "⚪ NEUTRAL"
+                                    
+                                st.markdown(f"📰 **[{title}]({n.get('link')})** - *(Fuente: {n.get('publisher')})*  \n└ *Sentimiento NLP:* **{s_badge}**")
+                            
+                            avg_sent = np.mean(sentiments)
+                            st.markdown("#### 🧠 TERMÓMETRO NLP (Sentimiento Global)")
+                            s_color = "#38BDF8" if avg_sent >= 0.05 else "#EF4444" if avg_sent <= -0.05 else "#94A3B8"
+                            s_text = "ALCISTA (BULLISH)" if avg_sent >= 0.05 else "BAJISTA (BEARISH)" if avg_sent <= -0.05 else "NEUTRO"
+                            st.markdown(f"<h3 style='color:{s_color};'>{s_text} (Score: {avg_sent:.2f})</h3>", unsafe_allow_html=True)
+                            
+                        except:
+                            for n in news[:5]:
+                                st.markdown(f"📰 **[{n.get('title')}]({n.get('link')})** - *(Fuente: {n.get('publisher')})*")
                     else:
                         st.info("No hay noticias macroeconómicas o corporativas recientes.")
                 except Exception as e:
                     st.error(f"El Data Lake no devolvió fundamentales directos para el activo {t_fund}.")
 
-    # --- TAB 7: BACKTESTER MAQUINA DEL TIEMPO ---
+    # --- TAB 7: AI FORECASTING ---
+    with tab_ai:
+        st.markdown("### MOTOR DE MACHINE LEARNING (FORECASTING NO-LINEAL)")
+        st.markdown("Entrenamiento en vivo de un *Random Forest Regressor* hiperparametrizado para proyectar el vector direccional de los próximos 10 días basado en *Price Action* histórico (Momentum, Volatilidad, Autocorrelación).")
+        
+        t_ai = st.selectbox("OPERAR RED NEURONAL SOBRE ACTIVO:", valid_tickers, label_visibility="collapsed", key="ai_sel")
+        
+        if t_ai:
+            if st.button("INICIAR INFERENCIA (SCIKIT-LEARN)", type="primary"):
+                with st.spinner(f"Entrenando modelo Random Forest para {t_ai}..."):
+                    df_ai = pd.DataFrame()
+                    df_ai['Close'] = df_close[t_ai]
+                    df_ai['Returns'] = df_ai['Close'].pct_change()
+                    df_ai['Lag_1'] = df_ai['Close'].shift(1)
+                    df_ai['Lag_2'] = df_ai['Close'].shift(2)
+                    df_ai['SMA_10'] = df_ai['Close'].rolling(window=10).mean()
+                    df_ai['Vol_10'] = df_ai['Returns'].rolling(window=10).std()
+                    
+                    df_ai['Target'] = df_ai['Close'].shift(-1)
+                    df_ai = df_ai.dropna()
+                    
+                    if len(df_ai) > 50:
+                        try:
+                            from sklearn.ensemble import RandomForestRegressor
+                            
+                            vars_in = ['Lag_1', 'Lag_2', 'SMA_10', 'Vol_10']
+                            X = df_ai[vars_in]
+                            y = df_ai['Target']
+                            
+                            model = RandomForestRegressor(n_estimators=100, random_state=42, n_jobs=-1)
+                            model.fit(X, y)
+                            
+                            last_row = df_ai.iloc[-1]
+                            current_close = df_ai.iloc[-1]['Close']
+                            current_lag1 = df_ai.iloc[-1]['Close']
+                            current_lag2 = df_ai.iloc[-1]['Lag_1']
+                            
+                            running_closes = list(df_ai['Close'].iloc[-10:].values)
+                            running_returns = list(df_ai['Returns'].iloc[-10:].values)
+                            
+                            predictions = []
+                            future_dates = [df_ai.index[-1] + pd.Timedelta(days=i) for i in range(1, 11)]
+                            
+                            for _ in range(10):
+                                sma = np.mean(running_closes[-10:])
+                                vol = np.std(running_returns[-10:])
+                                features = pd.DataFrame([[current_lag1, current_lag2, sma, vol]], columns=vars_in)
+                                pred_price = model.predict(features)[0]
+                                predictions.append(pred_price)
+                                
+                                ret = (pred_price - current_close) / current_close if current_close != 0 else 0
+                                running_closes.append(pred_price)
+                                running_returns.append(ret)
+                                current_lag2 = current_lag1
+                                current_lag1 = pred_price
+                                current_close = pred_price
+                                
+                            fig_ml = go.Figure()
+                            hist_60 = df_ai.iloc[-60:]
+                            fig_ml.add_trace(go.Scatter(x=hist_60.index, y=hist_60['Close'], mode='lines', name='Histórico Real', line=dict(color=COLOR_SMOKE, width=2)))
+                            fig_ml.add_trace(go.Scatter(x=future_dates, y=predictions, mode='lines', name='Predicción AI (T+10)', line=dict(color=COLOR_TREND, width=3, dash='dash')))
+                            
+                            fig_ml = clean_layout(fig_ml, height=450, title=f"PROYECCIÓN ALGORÍTMICA - {t_ai} (10 DÍAS)")
+                            st.plotly_chart(fig_ml, use_container_width=True)
+                            
+                            var_pct = ((predictions[-1] - df_ai.iloc[-1]['Close']) / df_ai.iloc[-1]['Close']) * 100
+                            c1, c2 = st.columns(2)
+                            c1.metric("PRECIO ACTUAL", f"{df_ai.iloc[-1]['Close']:.2f} $")
+                            c2.metric("PROYECCIÓN T+10", f"{predictions[-1]:.2f} $", delta=f"{var_pct:.2f}% Estimado", delta_color="normal" if var_pct >= 0 else "inverse")
+                        except Exception as e:
+                            st.error(f"Error al computar el cerebro de inferencia: {e}")
+                    else:
+                        st.error("NO HAY SUFICIENTES DATOS HISTÓRICOS PARA ENTRENAR LA RED MULTICAPA.")
+                        
+    # --- TAB 8: BACKTESTER MAQUINA DEL TIEMPO ---
     with tab_backtest:
         st.markdown("### MAQUINA DEL TIEMPO (BACKTESTER HISTORICO)")
         st.markdown("Simulación retrospectiva de la inyección de capital inicial frente a estrategias de Benchmark pasivo.")
