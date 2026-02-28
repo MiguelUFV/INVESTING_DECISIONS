@@ -402,10 +402,55 @@ def interpret_oraculo(simulations: np.ndarray, var_95: float):
 # --- APLICACION PRINCIPAL ---
 
 def main():
+    if "authenticated" not in st.session_state:
+        st.session_state.authenticated = False
+        st.session_state.username = None
+
+    if not st.session_state.authenticated:
+        st.markdown("<h1 style='text-align: center; margin-top: 10vh;'>🔒 AURA WEALTH OS</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color:#94A3B8;'>Portal de Autenticación Institucional</p>", unsafe_allow_html=True)
+        
+        c1, c2, c3 = st.columns([1, 1.5, 1])
+        with c2:
+            tab_login, tab_register = st.tabs(["INICIAR SESIÓN", "CREAR CUENTA"])
+            import database as db
+            
+            with tab_login:
+                with st.form("login_form"):
+                    u_login = st.text_input("Usuario (Ej: admin)")
+                    p_login = st.text_input("Contraseña", type="password")
+                    if st.form_submit_button("Entrar a la Terminal", type="primary", use_container_width=True):
+                        if db.authenticate_user(u_login, p_login):
+                            st.session_state.authenticated = True
+                            st.session_state.username = u_login
+                            st.rerun()
+                        else:
+                            st.error("Credenciales inválidas o cuenta inexistente.")
+                            
+            with tab_register:
+                with st.form("register_form"):
+                    u_reg = st.text_input("Nuevo Usuario")
+                    p_reg = st.text_input("Nueva Contraseña", type="password")
+                    if st.form_submit_button("Registrar Cuenta", type="primary", use_container_width=True):
+                        if len(u_reg) > 2 and len(p_reg) > 2:
+                            if db.create_user(u_reg, p_reg):
+                                st.success("Cuenta aprovisionada. Ya puedes Iniciar Sesión.")
+                            else:
+                                st.error("El nombre de usuario ya está registrado en el sistema.")
+                        else:
+                            st.error("Las credenciales deben tener 3 o más caracteres.")
+        return
+
     st.markdown("<h1>AURA WEALTH OS (QUANT PLATFORM)</h1>", unsafe_allow_html=True)
     st.markdown("<p style='color:#94A3B8; font-size:1.1rem; letter-spacing:0.02em;'>Plataforma FinTech Next-Gen para Análisis Algorítmico y Retorno Absoluto.</p>", unsafe_allow_html=True)
     
     with st.sidebar:
+        st.markdown(f"**👤 Inversor Conectado:** `{st.session_state.username}`")
+        if st.button("Cerrar Sesión", use_container_width=True):
+            st.session_state.authenticated = False
+            st.session_state.username = None
+            st.rerun()
+            
         with st.form("filtros_globales", clear_on_submit=False):
             st.markdown("<h3>PARAMETROS DE ENTORNO</h3>", unsafe_allow_html=True)
             st.markdown("<hr>", unsafe_allow_html=True)
@@ -637,7 +682,10 @@ def main():
     # --- TAB 5: CARTERA REAL (PORTFOLIO TRACKER) ---
     with tab_port:
         st.markdown("### VALORACION DE CARTERA Y PnL EN VIVO")
-        st.markdown("Carga aquí tus posiciones actuales de mercado para computar su valor nominal e impacto marginal de riesgo.")
+        st.markdown("Sistema sincronizado en la Nube. Carga tus activos y valídate para mantener la posición.")
+        import database as db
+        
+        saved_port = db.load_portfolio(st.session_state.username)
         
         if valid_tickers:
             with st.form("portfolio_form"):
@@ -645,10 +693,20 @@ def main():
                 shares = {}
                 for i, tk in enumerate(valid_tickers):
                     with cols[i % 4]:
-                         shares[tk] = st.number_input(f"Acciones de {tk}", min_value=0.0, value=0.0, step=1.0)
-                port_submit = st.form_submit_button("COMPUTAR VALORACION", type="primary")
+                         val_def = float(saved_port.get(tk, 0.0))
+                         shares[tk] = st.number_input(f"Acciones {tk}", min_value=0.0, value=val_def, step=1.0)
+                
+                c_b1, c_b2 = st.columns(2)
+                with c_b1:
+                    port_submit = st.form_submit_button("COMPUTAR VALORACION (TEMPORAL)", type="primary", use_container_width=True)
+                with c_b2:
+                    save_submit = st.form_submit_button("☁️ GUARDAR CARTERA EN BASE DE DATOS", use_container_width=True)
             
-            if port_submit and sum(shares.values()) > 0:
+            if save_submit:
+                db.save_portfolio(st.session_state.username, shares)
+                st.success(f"Portafolio guardado correctamente en la cuenta de '{st.session_state.username}'.")
+                
+            if port_submit or sum(shares.values()) > 0:
                 total_val = 0
                 st.markdown("#### DESGLOSE NOMINAL DE POSICIONES")
                 c1, c2, c3, c4 = st.columns(4)
