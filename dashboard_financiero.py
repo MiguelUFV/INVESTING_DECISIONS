@@ -357,7 +357,26 @@ def main():
         st.markdown("<hr>", unsafe_allow_html=True)
         
         st.markdown("#### CONFIGURACION DE ACTIVOS")
-        tickers_input = st.text_input("Ingesta de Tickers (CSV format)", value="SPY, AAPL, MSFT, BRK-B, TLT", help="Símbolos de empresas a estudiar, separados por coma. MSFT = Microsoft. AAPL = Apple.")
+        
+        tickers_selected = []
+        with st.expander("🌍 SELECCION VISUAL POR MERCADOS", expanded=True):
+            st.markdown("**🇺🇸 MERCADO AMERICANO (USA)**")
+            us_tech = st.multiselect("Tecnológicas (Big Tech)", ["AAPL", "MSFT", "GOOGL", "AMZN", "META", "NVDA", "TSLA"], default=["AAPL", "MSFT"], help="Gigantes de Silicon Valley.")
+            us_fin = st.multiselect("Valor y Consumo", ["JPM", "V", "BRK-B", "JNJ", "PG", "WMT"], default=["BRK-B"], help="Bancos y empresas tradicionales gigantes.")
+            us_etf = st.multiselect("Índices y Bonos (ETFs)", ["SPY", "QQQ", "DIA", "IWM", "TLT"], default=["SPY", "TLT"], help="Fondos que agrupan a todo el mercado o renta fija.")
+            
+            st.markdown("**🇪🇺 MERCADO EUROPEO**")
+            eu_stocks = st.multiselect("Gran Capitalización EU", ["ASML", "SAN.MC", "IBE.MC", "ITX.MC", "MC.PA", "SAP", "SIE.DE"], default=[], help="Principales empresas de Europa y bolsa de Madrid.")
+            
+            st.markdown("**🪙 CRIPTOACTIVOS**")
+            crypto = st.multiselect("Monedas Digitales", ["BTC-USD", "ETH-USD", "SOL-USD", "XRP-USD"], default=[], help="Criptomonedas de altísima volatilidad.")
+            
+            st.markdown("**🛠️ TICKERS MANUALES**")
+            custom_tickers = st.text_input("Añadir otros (Separados por coma)", value="", placeholder="Ej: DIS, NFLX, UBER", help="Escribe aquí las letras de cualquier otra empresa de Yahoo Finance.")
+            
+            tickers_selected.extend(us_tech + us_fin + us_etf + eu_stocks + crypto)
+            if custom_tickers:
+                tickers_selected.extend([t.strip().upper() for t in custom_tickers.split(',') if t.strip()])
         
         st.markdown("#### HORIZONTE TEMPORAL")
         col_d1, col_d2 = st.columns(2)
@@ -373,7 +392,7 @@ def main():
         run_btn = st.button("INICIALIZAR MOTOR Y COMPILAR DATOS", type="primary", use_container_width=True)
 
     if run_btn or "df_close" in st.session_state:
-        tickers_list = [t.strip().upper() for t in tickers_input.split(',') if t.strip()]
+        tickers_list = list(set(tickers_selected)) # Remove duplicates automatically
         if not tickers_list:
             st.error("LA CONFIGURACION REQUIERE UN ACTIVO COMO MINIMO.")
             st.stop()
