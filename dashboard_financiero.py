@@ -97,12 +97,24 @@ def download_data(tickers: list, start_date: str, end_date: str) -> pd.DataFrame
         
     data = yf.download(tickers, start=start_date, end=end_date, progress=False, auto_adjust=True)
     
+    if data.empty:
+        return pd.DataFrame(), data
+        
     if isinstance(data.columns, pd.MultiIndex):
-        df_close = data['Close']
+        if 'Close' in data.columns.get_level_values(0):
+            df_close = data['Close']
+        else:
+            df_close = pd.DataFrame() # Fallback si falla yfinance temporalmente
     else:
-        df_close = pd.DataFrame({tickers[0]: data['Close']}) if len(tickers) == 1 else data
+        if 'Close' in data.columns:
+            df_close = pd.DataFrame({tickers[0]: data['Close']}) if len(tickers) == 1 else data[['Close']]
+        else:
+            df_close = pd.DataFrame()
 
-    df_close = df_close.ffill().bfill()
+    if not df_close.empty:
+        df_close = df_close.dropna(axis=1, how='all')
+        df_close = df_close.ffill().bfill()
+        
     return df_close, data
 
 # --- MATEMÁTICAS CUANTITATIVAS ---
@@ -309,6 +321,9 @@ def render_education_box(title: str, content: str):
     st.markdown(f'<div class="edu-box"><div class="edu-title">📖 {title}</div>{content}</div>', unsafe_allow_html=True)
 
 def interpret_technical(df: pd.DataFrame) -> str:
+    if df.empty or len(df) < 50:
+        return "<div class='dynamic-analysis'>⏳ No hay datos históricos suficientes (mínimo 50 periodos) para generar veredictos técnicos institucionales fiables. Amplifique el horizonte del panel lateral.</div>"
+        
     ult = df.iloc[-1]
     msgs = ["<div class='dynamic-analysis'><h4 style='color:#38BDF8; margin-top:0;'>🧠 Análisis Técnico Generativo</h4>"]
     trend_color = COLOR_UP if ult['Close'] > ult['SMA_50'] else COLOR_DOWN
@@ -431,6 +446,10 @@ def main():
     df_close = st.session_state["df_close"]
     valid_tickers = st.session_state["valid_tickers"]
     raw_data = st.session_state["raw_data"]
+
+    if df_close.empty or len(df_close) < 10:
+        st.error("⚠️ El horizonte temporal es demasiado corto o contiene activos no detectados por Yahoo Finance. Amplíe el rango de fechas en la barra lateral para permitir el análisis.")
+        st.stop()
 
     tab_tec, tab_quant, tab_solver, tab_oraculo, tab_data = st.tabs([
         "  CHARTING  ", "  Q-RISK  ", "  SOLVER  ", "  PROPHET  ", "  RAW DATA  "
@@ -581,9 +600,12 @@ def main():
         if t_mc:
             with st.spinner("Procesando Tensores de Probabilidad (500 Iteraciones)..."):
                 returns_mc = df_close[t_mc].pct_change().dropna()
-                sim_data = run_monte_carlo(df_close[t_mc].iloc[-1], returns_mc, days=252, simulations=500)
-                st.plotly_chart(create_monte_carlo_chart(sim_data, t_mc), use_container_width=True)
-                st.markdown(interpret_monte_carlo(sim_data, t_mc), unsafe_allow_html=True)
+                if len(returns_mc) < 20:
+                     st.warning("⚠️ Insuficiente histórico para alimentar la simulación de Monte Carlo con precisión. Aumente la fecha de inicio (>1 mes hÃ¡bil).")
+                else:
+                    sim_data = run_monte_carlo(df_close[t_mc].iloc[-1], returns_mc, days=252, simulations=500)
+                    st.plotly_chart(create_monte_carlo_chart(sim_data, t_mc), use_container_width=True)
+                    st.markdown(interpret_monte_carlo(sim_data, t_mc), unsafe_allow_html=True)
 
     with tab_data:
         st.markdown("### Data Lake Extraído a Terminal")
