@@ -1058,50 +1058,50 @@ def main():
                         vars_in = ['Lag_1', 'Lag_2', 'SMA_10', 'Vol_10']
                         X = df_ai[vars_in]
                         y = df_ai['Target']
-                    with st.spinner("Despertando Agente de Inteligencia Artificial (Gemini Pro)..."):
-                        try:
-                            # Configurar API Key del usuario
-                            genai.configure(api_key="AIzaSyDStCEJ-Ezv865wKjwqDLES8uVQfhVB1vo")
-                            
-                            # Recopilar Contexto Matemático para el LLM
-                            df_ml = calculate_technical_indicators(df_close[t_ai])
-                            current_pr = df_ml['Close'].iloc[-1]
-                            rsi_now = df_ml['RSI'].iloc[-1]
-                            vol_now = df_ml['Volatilidad_21d'].iloc[-1] * 100
-                            
-                            # Crear el Prompt del Analista
-                            prompt = f"""
-                            Actúa como un gestor de fondos de cobertura senior y analista cuantitativo institucional.
-                            Estoy analizando el activo financiero {t_ai}.
-                            
-                            Aquí tienes sus últimos datos técnicos calculados hoy por mi motor:
-                            - Precio de cierre actual: {current_pr:.2f} $
-                            - RSI (Índice de Fuerza Relativa temporal): {rsi_now:.2f} (Recuerda: >70 es sobrecompra y riesgo de reversión, <30 es sobreventa y oportunidad).
-                            - Volatilidad Anualizada (Ventana corta): {vol_now:.2f} %
-                            
-                            Instrucciones: Escribe un informe de 2 párrafos para mi cliente. 
-                            El primer párrafo debe dar tu visión macro y técnica del activo basándote en esos números fríos sin emociones. 
-                            El segundo párrafo debe dar una recomendación clara (Acumular, Mantener, o Reducir Riesgo) y explicar por qué.
-                            Habla con tono extremadamente profesional, institucional y directo. Nada de saludos ni introducciones genéricas.
-                            """
-                            
-                            # Llamada al LLM
-                            model = genai.GenerativeModel('gemini-1.5-flash')
-                            response = model.generate_content(prompt)
-                            
-                            # Presentación de la Interfaz
-                            c1, c2, c3 = st.columns(3)
-                            c1.metric("PRECIO HOY", f"{current_pr:.2f} $")
-                            c2.metric("RSI INSTANTÁNEO", f"{rsi_now:.2f}", delta="Sobrecomprado" if rsi_now>70 else ("Sobrevendido" if rsi_now<30 else "Neutral"), delta_color="inverse")
-                            c3.metric("MODELO LLM", f"Gemini 1.5 Pro")
-                            
-                            st.markdown("### 🧠 SÍNTESIS DEL AGENTE (LLM INSIGHTS)")
-                            st.info(response.text)
-                            
-                            st.caption("Nota: Este análisis es generado en tiempo real por una IA basándose en los parámetros técnicos actuales y no constituye asesoramiento financiero vinculante.")
+                        with st.spinner("Despertando Agente de Inteligencia Artificial (Gemini Pro)..."):
+                            try:
+                                # Configurar API Key del usuario
+                                genai.configure(api_key="AIzaSyDStCEJ-Ezv865wKjwqDLES8uVQfhVB1vo")
+                                
+                                # Recopilar Contexto Matemático para el LLM
+                                df_ml = calculate_technical_indicators(df_close[t_ai])
+                                current_pr = df_ml['Close'].iloc[-1]
+                                rsi_now = df_ml['RSI'].iloc[-1]
+                                vol_now = df_ml['Volatilidad_21d'].iloc[-1] * 100
+                                
+                                # Crear el Prompt del Analista
+                                prompt = f"""
+                                Actúa como un gestor de fondos de cobertura senior y analista cuantitativo institucional.
+                                Estoy analizando el activo financiero {t_ai}.
+                                
+                                Aquí tienes sus últimos datos técnicos calculados hoy por mi motor:
+                                - Precio de cierre actual: {current_pr:.2f} $
+                                - RSI (Índice de Fuerza Relativa temporal): {rsi_now:.2f} (Recuerda: >70 es sobrecompra y riesgo de reversión, <30 es sobreventa y oportunidad).
+                                - Volatilidad Anualizada (Ventana corta): {vol_now:.2f} %
+                                
+                                Instrucciones: Escribe un informe de 2 párrafos para mi cliente. 
+                                El primer párrafo debe dar tu visión macro y técnica del activo basándote en esos números fríos sin emociones. 
+                                El segundo párrafo debe dar una recomendación clara (Acumular, Mantener, o Reducir Riesgo) y explicar por qué.
+                                Habla con tono extremadamente profesional, institucional y directo. Nada de saludos ni introducciones genéricas.
+                                """
+                                
+                                # Llamada al LLM
+                                model = genai.GenerativeModel('gemini-1.5-flash')
+                                response = model.generate_content(prompt)
+                                
+                                # Presentación de la Interfaz
+                                c1, c2, c3 = st.columns(3)
+                                c1.metric("PRECIO HOY", f"{current_pr:.2f} $")
+                                c2.metric("RSI INSTANTÁNEO", f"{rsi_now:.2f}", delta="Sobrecomprado" if rsi_now>70 else ("Sobrevendido" if rsi_now<30 else "Neutral"), delta_color="inverse")
+                                c3.metric("MODELO LLM", f"Gemini 1.5 Pro")
+                                
+                                st.markdown("### 🧠 SÍNTESIS DEL AGENTE (LLM INSIGHTS)")
+                                st.info(response.text)
+                                
+                                st.caption("Nota: Este análisis es generado en tiempo real por una IA basándose en los parámetros técnicos actuales y no constituye asesoramiento financiero vinculante.")
 
-                        except Exception as e:
-                            st.error(f"Error de conexión con IA Cuántica: {e}. Revisa la validez de la clave.")
+                            except Exception as e:
+                                st.error(f"Error de conexión con IA Cuántica: {e}. Revisa la validez de la clave.")
                     else:
                         st.error("NO HAY SUFICIENTES DATOS HISTÓRICOS PARA ENTRENAR LA RED MULTICAPA.")
                         
