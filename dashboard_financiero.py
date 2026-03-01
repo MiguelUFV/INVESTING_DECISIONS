@@ -1197,20 +1197,30 @@ def main():
                     import os
                     from fpdf import FPDF
                     from datetime import datetime
-                    import google.generativeai as genai
                     
                     # 1. Variables Financieras
                     ret_anu = ((df_close[t_rep].iloc[-1] / df_close[t_rep].iloc[0]) ** (252 / len(df_close)) - 1) * 100
                     vol_anu = df_close[t_rep].pct_change().std() * np.sqrt(252) * 100
                     drawdown = -(df_close[t_rep].cummax() - df_close[t_rep]).max() / df_close[t_rep].max() * 100
                     
-                    # 2. Generar Gráfico Plotly
-                    fig_pdf = go.Figure()
-                    fig_pdf.add_trace(go.Scatter(x=df_close.index, y=df_close[t_rep], mode='lines', line=dict(color=COLOR_TREND, width=2)))
-                    fig_pdf = clean_layout(fig_pdf, title=f"Evolución Histórica: {t_rep} ({len(df_close)} Sesiones)", height=400)
+                    # 2. Generar Gráfico Matplotlib estático (Evita cuelgues de Kaleido/Plotly en la nube)
+                    import matplotlib.pyplot as plt
+                    
+                    fig_pdf, ax = plt.subplots(figsize=(10, 4))
+                    ax.plot(df_close.index, df_close[t_rep], color='#38BDF8', linewidth=2)
+                    ax.set_title(f"Evolución Histórica: {t_rep} ({len(df_close)} Sesiones)", color='#1E293B', fontsize=12, fontweight='bold', pad=15)
+                    ax.set_facecolor('#F8FAFC')
+                    fig_pdf.patch.set_facecolor('#F8FAFC')
+                    ax.grid(color='#E2E8F0', linestyle='--', linewidth=0.5)
+                    ax.spines['top'].set_visible(False)
+                    ax.spines['right'].set_visible(False)
+                    ax.spines['left'].set_color('#CBD5E1')
+                    ax.spines['bottom'].set_color('#CBD5E1')
+                    ax.tick_params(colors='#475569')
                     
                     img_path = f"tear_sheet_chart_{t_rep}.png"
-                    fig_pdf.write_image(img_path, engine="kaleido", scale=2)
+                    fig_pdf.savefig(img_path, bbox_inches='tight', dpi=300)
+                    plt.close(fig_pdf)
                     
                     # 3. NLP Prompt Reemplazado por Texto Determinista
                     texto_ia = f"SÍNTESIS ALGORÍTMICA: El activo {t_rep} evidencia un Retorno Anualizado de {ret_anu:.2f}% frente a una Volatilidad Base Histórica de {vol_anu:.2f}%. Contabilizando un Max Drawdown de {drawdown:.2f}%, el perfil de riesgo-retorno exige estricta vigilancia sobre la Media Móvil Estructural (SMA 50) para evitar trampas de liquidez y divergencias en los momentum rezagados."
