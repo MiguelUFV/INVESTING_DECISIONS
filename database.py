@@ -102,9 +102,35 @@ def authenticate_user(username: str, password: str) -> bool:
         print(f"Error de base de datos en la nube: {e}")
         return False
 
-# Funciones desactivadas hasta versión Pro de portafolios (requerirían otra pestaña de Excel dedicada)
+import json
+
 def save_portfolio(username: str, portfolio_dict: dict):
-    pass
+    """Guarda o actualiza la configuración de la cartera del usuario en SheetDB (crear columna Portfolio_JSON en Excel)"""
+    try:
+        payload = {
+            "data": {
+                "Portfolio_JSON": json.dumps(portfolio_dict)
+            }
+        }
+        # Actualiza la fila donde Correo sea igual a username
+        response = requests.put(f"{SHEETDB_URL}/Correo/{username}", json=payload)
+        return response.status_code == 200
+    except Exception as e:
+        print(f"Error al guardar portafolio: {e}")
+        return False
 
 def load_portfolio(username: str) -> dict:
-    return {}
+    """Recupera la cartera guardada en la Nube."""
+    try:
+        response = requests.get(f"{SHEETDB_URL}/search?Correo={username}")
+        if response.status_code == 200:
+            users = response.json()
+            if len(users) > 0:
+                user_data = users[0]
+                port_json = user_data.get("Portfolio_JSON", "")
+                if port_json:
+                    return json.loads(port_json)
+        return {}
+    except Exception as e:
+        print(f"Error al cargar portafolio: {e}")
+        return {}

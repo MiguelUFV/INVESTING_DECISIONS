@@ -705,8 +705,7 @@ def main():
         
         interpret_tecnico(df_tec, ticker_tec)
 
-    # --- TAB 2: METRICAS RIESGO CAPM & DRAWDOWNS ---
-    with tab_quant:
+    elif vista_actual == "RIESGO (CAPM)":
         c_head, c_select = st.columns([3, 1])
         c_head.markdown("### AUDITORIA PARAMETRICA DE RENDIMIENTO (CAPM)")
         t_sel = c_select.selectbox("ENFOCAR ACTIVO ANALITICO:", valid_tickers, index=None, placeholder="Elegir Activo...", label_visibility="collapsed", key="capm_sel")
@@ -733,9 +732,8 @@ def main():
         else:
              st.warning("SE REQUIERE EL ACTIVO BENCHMARK ('SPY') EN LA CONFIGURACION PARA COMPUTAR EL MODELO CAPM.")
 
-    # --- TAB 3: MATRIZ CORRELACION Y SOLVER ---
-    with tab_solver:
-        st.markdown("### MODELADO DE COVARIANZA NO-LINEAL")
+    elif vista_actual == "MARKOWITZ":
+        st.markdown("### MODELADO ESTOCÁSTICO Y FRONTERA EFICIENTE")
         
         if len(valid_tickers) < 2:
             st.error("OPERACION DENEGADA. LA ARQUITECTURA REQUIERE AL MENOS DOS SERIES COMPATIBLES PARAMETRICAMENTE.")
@@ -752,7 +750,39 @@ def main():
             with c_sv:
                 st.markdown("#### OPTIMIZADOR SHARPE (METODO SLSQP)")
                 if st.button("COMPUTAR FRONTERA EFICIENTE", type="primary"):
-                    max_w, min_w = get_optimized_portfolios(returns_all.mean().values, returns_all.cov().values, RISK_FREE_RATE)
+                    with st.spinner("Simulando 2,500 carteras aleatorias hipervectoriales..."):
+                        max_w, min_w = get_optimized_portfolios(returns_all.mean().values, returns_all.cov().values, RISK_FREE_RATE)
+                        
+                        # Generación de Frontera Eficiente Visual
+                        num_portfolios = 2500
+                        results = np.zeros((3, num_portfolios))
+                        mean_rets = returns_all.mean().values
+                        cov_mat = returns_all.cov().values
+                        
+                        for i in range(num_portfolios):
+                            weights = np.random.random(len(valid_tickers))
+                            weights /= np.sum(weights)
+                            p_ret = np.sum(mean_rets * weights) * 252
+                            p_std = np.sqrt(np.dot(weights.T, np.dot(cov_mat, weights))) * np.sqrt(252)
+                            p_sharpe = (p_ret - RISK_FREE_RATE) / p_std
+                            results[0,i] = p_std
+                            results[1,i] = p_ret
+                            results[2,i] = p_sharpe
+                            
+                        fig_ef = go.Figure()
+                        fig_ef.add_trace(go.Scatter(x=results[0,:], y=results[1,:], mode='markers', 
+                                                    marker=dict(color=results[2,:], colorscale='Viridis', showscale=True, size=5, colorbar=dict(title="Sharpe")),
+                                                    name='Carteras Aleatorias'))
+                        
+                        opt_ret = np.sum(mean_rets * max_w) * 252
+                        opt_std = np.sqrt(np.dot(max_w.T, np.dot(cov_mat, max_w))) * np.sqrt(252)
+                        fig_ef.add_trace(go.Scatter(x=[opt_std], y=[opt_ret], mode='markers', marker=dict(color='red', size=15, symbol='star'), name='Máximo Sharpe'))
+                        
+                        fig_ef = clean_layout(fig_ef, title="FRONTERA EFICIENTE DE MARKOWITZ", height=450)
+                        fig_ef.update_xaxes(title="Riesgo Anualizado (Volatilidad)")
+                        fig_ef.update_yaxes(title="Retorno Anualizado Esperado")
+                        st.plotly_chart(fig_ef, use_container_width=True)
+                    
                     interpret_markowitz(max_w, valid_tickers)
                     
                     df_weights = pd.DataFrame({'Activo': valid_tickers, 'Asignación (%)': max_w * 100})
@@ -1111,72 +1141,113 @@ def main():
 
     elif vista_actual == "REPORTE PDF":
         st.markdown("### GENERACION DE TEAR SHEETS INSTITUCIONALES")
-        st.markdown("Exporta la analítica matemática de esta sesión en un informe sintético para clientes.")
+        st.markdown("Exporta la analítica matemática de esta sesión en un informe sintético de mercado para clientes institucionales. Combina métricas, visualizaciones de IA y narrativas de NLP.")
         
-        if st.button("GENERAR INFORME MATRICIAL", type="primary"):
-            report_md = f"""# TEAR SHEET INSTITUCIONAL (QUANT ENGINE)
-        # Simular Reporte PDF exportable (Tear Sheet)
         t_rep = st.selectbox("GENERAR SÍNTESIS DE:", valid_tickers, index=None, placeholder="Elegir Activo...", label_visibility="collapsed")
         
         if not t_rep:
-            st.info("Selecciona el activo para forjar el Tear Sheet corporativo PDF.")
+            st.info("👈 Selecciona el activo de la lista para forjar el Tear Sheet corporativo PDF.")
             st.stop()
             
-        if st.button("GENERAR TEAR SHEET (.PDF)"):
-            with st.spinner("Compilando Documento PDF Corporativo..."):
+        if st.button("COMPILAR TEAR SHEET (.PDF)", type="primary"):
+            with st.spinner(f"Compilando Tear Sheet PDF para {t_rep} (Conectando con Servidor Neural)..."):
                 try:
+                    import os
                     from fpdf import FPDF
                     from datetime import datetime
+                    import google.generativeai as genai
                     
-                    ret_anu = calculate_annualized_return(df_close[t_rep]) * 100
-                    vol_anu = calculate_annualized_vol(df_close[t_rep]) * 100
+                    # 1. Variables Financieras
+                    ret_anu = ((df_close[t_rep].iloc[-1] / df_close[t_rep].iloc[0]) ** (252 / len(df_close)) - 1) * 100
+                    vol_anu = df_close[t_rep].pct_change().std() * np.sqrt(252) * 100
                     drawdown = -(df_close[t_rep].cummax() - df_close[t_rep]).max() / df_close[t_rep].max() * 100
                     
-                    pdf = FPDF()
+                    # 2. Generar Gráfico Plotly
+                    fig_pdf = go.Figure()
+                    fig_pdf.add_trace(go.Scatter(x=df_close.index, y=df_close[t_rep], mode='lines', line=dict(color=COLOR_TREND, width=2)))
+                    fig_pdf = clean_layout(fig_pdf, title=f"Evolución Histórica: {t_rep} ({len(df_close)} Sesiones)", height=400)
+                    
+                    img_path = f"tear_sheet_chart_{t_rep}.png"
+                    fig_pdf.write_image(img_path, engine="kaleido", scale=2)
+                    
+                    # 3. Prompt LLM para Análisis NLP
+                    texto_ia = "Análisis Neuronal no disponible (API Key de Gemini no configurada correctamente en entorno o sistema inalcanzable)."
+                    try:
+                        API_KEY = "AIzaSyDStCEJ-Ezv865wKjwqDLES8uVQfhVB1vo"
+                        genai.configure(api_key=API_KEY)
+                        model = genai.GenerativeModel('gemini-1.5-flash')
+                        prompt = f"Actúa como un Gestor de Fondos Institucional. Analiza el activo {t_rep} que tiene un retorno anualizado de {ret_anu:.2f}%, volatilidad de {vol_anu:.2f}% y un Max Drawdown de {drawdown:.2f}%. Redacta un solo párrafo estrictamente corporativo, serio y sofisticado (máximo 80 palabras) concluyendo su viabilidad para añadir a cartera."
+                        response = model.generate_content(prompt)
+                        texto_ia = response.text.replace('*', '').strip()
+                    except Exception as e:
+                         pass
+                    
+                    # 4. Compilar FPDF
+                    class PDF(FPDF):
+                        def header(self):
+                            self.set_fill_color(15, 23, 42)
+                            self.rect(0, 0, 210, 30, 'F')
+                            self.set_font("helvetica", "B", 24)
+                            self.set_text_color(255, 255, 255)
+                            self.cell(0, 15, "AURA WEALTH OS", border=0, ln=1, align="C")
+                            
+                        def footer(self):
+                            self.set_y(-25)
+                            self.set_font("helvetica", "I", 8)
+                            self.set_text_color(128, 128, 128)
+                            self.multi_cell(0, 4, "CONFIDENCIAL: Este informe ha sido autogenerado por el Motor de IA Quant (Aura Wealth OS). Las simulaciones matematicas estocasticas o historicas aqui presentadas no constituyen asesoramiento financiero ni garantizan un comportamiento similar de los activos en el futuro. Rentabilidades pasadas no aseguran rentabilidades futuras.")
+
+                    pdf = PDF()
                     pdf.add_page()
-                    pdf.set_auto_page_break(auto=True, margin=15)
-                    pdf.set_fill_color(30, 41, 59) # Slate oscuro fondo header
+                    pdf.set_auto_page_break(auto=True, margin=20)
                     
-                    # Cabecera corporativa
-                    pdf.set_font("helvetica", "B", 24)
-                    pdf.cell(0, 20, "AURA WEALTH OS", border=0, ln=1, align="C", fill=True)
+                    # Título Secundario
+                    pdf.set_text_color(30, 41, 59)
+                    pdf.set_font("helvetica", "B", 16)
+                    pdf.ln(25)
+                    pdf.cell(0, 10, f"TEAR SHEET INSTITUCIONAL: {t_rep}", border=0, ln=1, align="C")
+                    pdf.set_font("helvetica", "I", 11)
+                    pdf.cell(0, 6, f"Fecha de emision del informe: {datetime.now().strftime('%Y-%m-%d  %H:%M')}", border=0, ln=1, align="C")
+                    pdf.ln(5)
                     
-                    pdf.set_font("helvetica", "I", 12)
-                    pdf.cell(0, 10, f"TEAR SHEET CUANTITATIVO: {t_rep}", border=0, ln=1, align="C")
-                    pdf.cell(0, 10, f"Fecha de emision: {datetime.now().strftime('%Y-%m-%d')}", border=0, ln=1, align="C")
+                    # Insertar Imagen Plotly
+                    if os.path.exists(img_path):
+                        pdf.image(img_path, x=15, w=180)
+                        pdf.ln(5)
+                        os.remove(img_path)
                     
-                    pdf.ln(10)
+                    # Bloque de Métricas
+                    pdf.set_fill_color(241, 245, 249)
+                    pdf.set_font("helvetica", "B", 12)
+                    pdf.cell(0, 10, "1. AUDITORIA PARAMETRICA (RIESGO ESTRUCTURAL)", border=0, ln=1, fill=False)
+                    pdf.ln(3)
                     
-                    # Cuerpo
-                    pdf.set_font("helvetica", "B", 14)
-                    pdf.cell(0, 10, "1. METRICAS DE RIESGO DE MERCADO (ANUALIZADAS)", border=0, ln=1)
+                    pdf.set_font("helvetica", "", 11)
+                    pdf.cell(0, 8, f"   - Retorno Compuesto (CAGR): {ret_anu:.2f} %", border=0, ln=1)
+                    pdf.cell(0, 8, f"   - Volatilidad Base Anualizada: {vol_anu:.2f} %", border=0, ln=1)
+                    pdf.cell(0, 8, f"   - Peor Caida historica en muestra (Drawdown): {drawdown:.2f} %", border=0, ln=1)
+                    pdf.ln(8)
+
+                    # Bloque de IA
+                    pdf.set_font("helvetica", "B", 12)
+                    pdf.cell(0, 10, "2. INFERENCIA DEL ALGORITMO QUANTITATIVO (LLM)", border=0, ln=1, fill=False)
+                    pdf.ln(3)
                     
-                    pdf.set_font("helvetica", "", 12)
-                    pdf.cell(0, 10, f"- Retorno Compuesto (CAGR): {ret_anu:.2f}%", border=0, ln=1)
-                    pdf.cell(0, 10, f"- Volatilidad Historica: {vol_anu:.2f}%", border=0, ln=1)
-                    pdf.cell(0, 10, f"- Drawdown Maximo Calculado: {drawdown:.2f}%", border=0, ln=1)
-                    
-                    pdf.ln(10)
-                    pdf.set_font("helvetica", "B", 14)
-                    pdf.cell(0, 10, "2. AUDITORIA PREDICTIVA / EXITO ALGORITMICO", border=0, ln=1)
-                    
-                    pdf.set_font("helvetica", "", 12)
-                    pdf.multi_cell(0, 8, f"El activo {t_rep} presenta una estructura de volatilidad del {vol_anu:.2f}%. En terminos de asignacion institucional, estos parametros sugieren un posicionamiento tactico sujeto a revisiones mensuales. El Motor de Modelado Temporal no detecta anomalias de formacion de precios a corto plazo.")
-                    
-                    # Footer disclaimer
-                    pdf.set_y(-30)
-                    pdf.set_font("helvetica", "I", 8)
-                    pdf.multi_cell(0, 5, "CONFIDENCIAL: Este informe ha sido autogenerado por el Motor de IA Quant (Aura Wealth OS). Las simulaciones matematicas estocasticas o historicas aqui presentadas no constituyen asesoramiento financiero ni garantizan un comportamiento similar de los activos en el futuro. Rentabilidades pasadas no aseguran rentabilidades futuras.")
+                    pdf.set_font("helvetica", "", 11)
+                    pdf.multi_cell(0, 6, f"NLP Engine Extract:\n\n{texto_ia}")
                     
                     pdf_bytes = pdf.output(dest='S')
-                    if isinstance(pdf_bytes, str): # En fpdf antiguo S devuelve str latin1
-                        pdf_bytes = pdf_bytes.encode('latin1')
+                    try:
+                        if isinstance(pdf_bytes, str):
+                            pdf_bytes = pdf_bytes.encode('latin1')
+                    except Exception as e:
+                        pass
                         
-                    st.success("Tear Sheet Compilado. Listo para Descarga.")
-                    st.download_button("📥 DESCARGAR INFORME CORPORATIVO (.PDF)", data=pdf_bytes, file_name=f"TearSheet_{t_rep}.pdf", mime="application/pdf")
+                    st.success(f"Tear Sheet Cuantitativo para {t_rep} Compilado con Éxito.")
+                    st.download_button("📥 DESCARGAR INFORME OFFICIAL (.PDF)", data=pdf_bytes, file_name=f"TearSheet_{t_rep}_AuraWealth.pdf", mime="application/pdf", use_container_width=True)
                 
                 except Exception as e:
-                    st.error(f"Fallo al inyectar fpdf2 en tiempo de ejecucion: {e}. Comprueba que esta instalado en el servidor.")
+                    st.error(f"Fallo en Renderización Documental (PDF Engine): {e}")
 
     elif vista_actual == "RAW DATA":
         st.markdown("### EXPORTACIÓN DEL TENSOR DATALAKE")
