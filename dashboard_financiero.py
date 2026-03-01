@@ -1168,8 +1168,18 @@ def main():
                                 rsi_now = df_ml['RSI'].iloc[-1]
                                 vol_now = df_ml['Volatilidad_21d'].iloc[-1] * 100
                                 
+                                # Cargar la Base de Conocimiento Financiero
+                                try:
+                                    with open('knowledge_base_ta.txt', 'r', encoding='utf-8') as f:
+                                        knowledge_base = f.read()
+                                except FileNotFoundError:
+                                    knowledge_base = ""
+
                                 # Crear el Prompt del Analista
                                 prompt = f"""
+                                Base de Conocimientos Institucional a seguir de manera inquebrantable:
+                                {knowledge_base}
+                                
                                 Actúa como un gestor de fondos de cobertura senior y analista cuantitativo institucional.
                                 Estoy analizando el activo financiero {t_ai}.
                                 
@@ -1178,14 +1188,9 @@ def main():
                                 - RSI (Índice de Fuerza Relativa temporal): {rsi_now:.2f} (Recuerda: >70 es sobrecompra y riesgo de reversión, <30 es sobreventa y oportunidad).
                                 - Volatilidad Anualizada (Ventana corta): {vol_now:.2f} %
                                 
-                                INSTRUCCIONES ESTRICTAS DE ANÁLISIS:
-                                1. Tu interpretación debe ser puramente algorítmica y matemática.
-                                2. REGLA DE DIVERGENCIA MACD: Si observas (o deduces) que el MACD está alcista pero el precio real está cayendo fuertemente o perdiendo soportes clave (como la Media Móvil de 50 días - SMA 50), DEBES ignorar la señal de compra del MACD. Trátalo explícitamente como un "indicador rezagado (lagging)" o una "divergencia bajista", ya que el MACD tarda en procesar caídas verticales.
-                                3. GESTIÓN DE RIESGO: Si la volatilidad supera el 30% y hay debilidad en la acción del precio, la regla institucional dicta priorizar la reducción de exposición (Reducir Tamaño/Esperar) en lugar de buscar rebotes inmediatos, ya que el riesgo por unidad de beneficio es asimétrico en contra del operador.
-                                
-                                Escribe un informe de 2 párrafos para mi cliente:
-                                - PÁRRAFO 1: Diagnóstico macro y técnico del activo basado exclusivamente en lo empírico. Menciona los riesgos de volatilidad y la relación del precio con indicadores tendenciales vs rezagados.
-                                - PÁRRAFO 2: Recomendación clara (Acumular, Mantener, o Reducir Riesgo) fundamentando por qué desde una óptica de preservación de capital institucional.
+                                Escribe un informe de 2 párrafos para mi cliente aplicando las reglas estrictas de la Base de Conocimientos proveída:
+                                - PÁRRAFO 1: Diagnóstico macro y técnico del activo basado exclusivamente en lo empírico. Evalúa explícitamente posibles divergencias de indicadores rezagados.
+                                - PÁRRAFO 2: Recomendación clara (Acumular, Mantener, o Reducir Riesgo) fundamentando tu decisión en la gestión de riesgo por volatilidad.
                                 
                                 Habla con tono extremadamente profesional, crudo y directo. Nada de saludos ni introducciones genéricas.
                                 """
@@ -1279,9 +1284,20 @@ def main():
                         API_KEY = "AIzaSyDStCEJ-Ezv865wKjwqDLES8uVQfhVB1vo"
                         genai.configure(api_key=API_KEY)
                         model = genai.GenerativeModel('gemini-1.5-flash')
-                        prompt = f"""Actúa como un Gestor de Fondos Institucional. Analiza el activo {t_rep} que tiene un retorno anualizado de {ret_anu:.2f}%, volatilidad de {vol_anu:.2f}% y un Max Drawdown de {drawdown:.2f}%. 
-                        REGLA DE RIESGO: Si el activo sufre caídas abruptas recientes por debajo de su SMA 50, advierte sobre posibles divergencias engañosas en indicadores rezagados como el MACD y sugiere reducir exposición.
-                        Redacta un solo párrafo estrictamente corporativo, serio y sofisticado (máximo 80 palabras) concluyendo su viabilidad para añadir a cartera basándote solo en números fríos."""
+                        
+                        try:
+                            with open('knowledge_base_ta.txt', 'r', encoding='utf-8') as f:
+                                kb_pdf = f.read()
+                        except FileNotFoundError:
+                            kb_pdf = ""
+                            
+                        prompt = f"""
+                        Base de Conocimientos Institucional a seguir estrictamente:
+                        {kb_pdf}
+                        
+                        Actúa como un Gestor de Fondos Institucional. Analiza el activo {t_rep} que tiene un retorno anualizado de {ret_anu:.2f}%, volatilidad de {vol_anu:.2f}% y un Max Drawdown de {drawdown:.2f}%. 
+                        Redacta un solo párrafo estrictamente corporativo, serio y sofisticado (máximo 80 palabras) concluyendo su viabilidad para añadir a cartera basándote en la base de conocimientos inyectada.
+                        """
                         response = model.generate_content(prompt)
                         texto_ia = response.text.replace('*', '').strip()
                     except Exception as e:
