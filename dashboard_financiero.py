@@ -1,4 +1,6 @@
 import streamlit as st
+import json
+from datetime import datetime
 import pandas as pd
 import numpy as np
 import yfinance as yf
@@ -7,12 +9,15 @@ from plotly.subplots import make_subplots
 import plotly.express as px
 from scipy.optimize import minimize
 from scipy.stats import norm
-from scipy import stats
+import scipy.stats as stats
+import time
+import requests
 import logging
 
 try:
     from sklearn.ensemble import RandomForestRegressor
     from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+    import google.generativeai as genai
 except ImportError:
     pass
 
@@ -999,49 +1004,50 @@ def main():
                             vars_in = ['Lag_1', 'Lag_2', 'SMA_10', 'Vol_10']
                             X = df_ai[vars_in]
                             y = df_ai['Target']
+                    with st.spinner("Despertando Agente de Inteligencia Artificial (Gemini Pro)..."):
+                        try:
+                            # Configurar API Key del usuario
+                            genai.configure(api_key="AIzaSyDStCEJ-Ezv865wKjwqDLES8uVQfhVB1vo")
                             
-                            model = RandomForestRegressor(n_estimators=100, random_state=42, n_jobs=-1)
-                            model.fit(X, y)
+                            # Recopilar Contexto Matemático para el LLM
+                            df_ml = calculate_technical_indicators(df_close[t_ai])
+                            current_pr = df_ml['Close'].iloc[-1]
+                            rsi_now = df_ml['RSI'].iloc[-1]
+                            vol_now = df_ml['Volatilidad_21d'].iloc[-1] * 100
                             
-                            last_row = df_ai.iloc[-1]
-                            current_close = df_ai.iloc[-1]['Close']
-                            current_lag1 = df_ai.iloc[-1]['Close']
-                            current_lag2 = df_ai.iloc[-1]['Lag_1']
+                            # Crear el Prompt del Analista
+                            prompt = f"""
+                            Actúa como un gestor de fondos de cobertura senior y analista cuantitativo institucional.
+                            Estoy analizando el activo financiero {t_ai}.
                             
-                            running_closes = list(df_ai['Close'].iloc[-10:].values)
-                            running_returns = list(df_ai['Returns'].iloc[-10:].values)
+                            Aquí tienes sus últimos datos técnicos calculados hoy por mi motor:
+                            - Precio de cierre actual: {current_pr:.2f} $
+                            - RSI (Índice de Fuerza Relativa temporal): {rsi_now:.2f} (Recuerda: >70 es sobrecompra y riesgo de reversión, <30 es sobreventa y oportunidad).
+                            - Volatilidad Anualizada (Ventana corta): {vol_now:.2f} %
                             
-                            predictions = []
-                            future_dates = [df_ai.index[-1] + pd.Timedelta(days=i) for i in range(1, 11)]
+                            Instrucciones: Escribe un informe de 2 párrafos para mi cliente. 
+                            El primer párrafo debe dar tu visión macro y técnica del activo basándote en esos números fríos sin emociones. 
+                            El segundo párrafo debe dar una recomendación clara (Acumular, Mantener, o Reducir Riesgo) y explicar por qué.
+                            Habla con tono extremadamente profesional, institucional y directo. Nada de saludos ni introducciones genéricas.
+                            """
                             
-                            for _ in range(10):
-                                sma = np.mean(running_closes[-10:])
-                                vol = np.std(running_returns[-10:])
-                                features = pd.DataFrame([[current_lag1, current_lag2, sma, vol]], columns=vars_in)
-                                pred_price = model.predict(features)[0]
-                                predictions.append(pred_price)
-                                
-                                ret = (pred_price - current_close) / current_close if current_close != 0 else 0
-                                running_closes.append(pred_price)
-                                running_returns.append(ret)
-                                current_lag2 = current_lag1
-                                current_lag1 = pred_price
-                                current_close = pred_price
-                                
-                            fig_ml = go.Figure()
-                            hist_60 = df_ai.iloc[-60:]
-                            fig_ml.add_trace(go.Scatter(x=hist_60.index, y=hist_60['Close'], mode='lines', name='Histórico Real', line=dict(color=COLOR_SMOKE, width=2)))
-                            fig_ml.add_trace(go.Scatter(x=future_dates, y=predictions, mode='lines', name='Predicción AI (T+10)', line=dict(color=COLOR_TREND, width=3, dash='dash')))
+                            # Llamada al LLM
+                            model = genai.GenerativeModel('gemini-1.5-flash')
+                            response = model.generate_content(prompt)
                             
-                            fig_ml = clean_layout(fig_ml, height=450, title=f"PROYECCIÓN ALGORÍTMICA - {t_ai} (10 DÍAS)")
-                            st.plotly_chart(fig_ml, use_container_width=True)
+                            # Presentación de la Interfaz
+                            c1, c2, c3 = st.columns(3)
+                            c1.metric("PRECIO HOY", f"{current_pr:.2f} $")
+                            c2.metric("RSI INSTANTÁNEO", f"{rsi_now:.2f}", delta="Sobrecomprado" if rsi_now>70 else ("Sobrevendido" if rsi_now<30 else "Neutral"), delta_color="inverse")
+                            c3.metric("MODELO LLM", f"Gemini 1.5 Pro")
                             
-                            var_pct = ((predictions[-1] - df_ai.iloc[-1]['Close']) / df_ai.iloc[-1]['Close']) * 100
-                            c1, c2 = st.columns(2)
-                            c1.metric("PRECIO ACTUAL", f"{df_ai.iloc[-1]['Close']:.2f} $")
-                            c2.metric("PROYECCIÓN T+10", f"{predictions[-1]:.2f} $", delta=f"{var_pct:.2f}% Estimado", delta_color="normal" if var_pct >= 0 else "inverse")
+                            st.markdown("### 🧠 SÍNTESIS DEL AGENTE (LLM INSIGHTS)")
+                            st.info(response.text)
+                            
+                            st.caption("Nota: Este análisis es generado en tiempo real por una IA basándose en los parámetros técnicos actuales y no constituye asesoramiento financiero vinculante.")
+
                         except Exception as e:
-                            st.error(f"Error al computar el cerebro de inferencia: {e}")
+                            st.error(f"Error de conexión con IA Cuántica: {e}. Revisa la validez de la clave.")
                     else:
                         st.error("NO HAY SUFICIENTES DATOS HISTÓRICOS PARA ENTRENAR LA RED MULTICAPA.")
                         
