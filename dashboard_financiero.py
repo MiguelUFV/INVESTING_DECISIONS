@@ -630,6 +630,7 @@ def main():
     st.sidebar.markdown("### 🎛️ NAVEGACIÓN MÓDULOS")
     
     opciones_nav = [
+        "📈 RESUMEN & COMPARATIVA",
         "TÉCNICO / MOMENTUM", 
         "RIESGO (CAPM)", 
         "MONTE CARLO (VaR)", 
@@ -650,7 +651,57 @@ def main():
     st.sidebar.caption("© 2026 Aura Wealth Quant Engine")
 
     # --- ENRUTADOR DE VISTAS ---
-    if vista_actual == "TÉCNICO / MOMENTUM":
+    if vista_actual == "📈 RESUMEN & COMPARATIVA":
+        st.markdown("### 📈 PANEL DE CONTROL: COMPARATIVA DIRECTA")
+        st.markdown("Añade o quita empresas para comparar visualmente su rendimiento normalizado desde el inicio del periodo seleccionado.")
+        
+        comparative_tickers = st.multiselect(
+            "Selecciona los activos a comparar simultáneamente:", 
+            options=valid_tickers, 
+            default=valid_tickers
+        )
+        
+        if not comparative_tickers:
+            st.warning("Selecciona al menos un activo para visualizar la gráfica comparativa.")
+        else:
+            df_norm = (df_close[comparative_tickers] / df_close[comparative_tickers].iloc[0]) * 100
+            
+            fig_comp = go.Figure()
+            for tk in comparative_tickers:
+                # Usar los colores de la app si es posible, pero Plotly asigna colores automáticos bien para muchas líneas
+                fig_comp.add_trace(go.Scatter(
+                    x=df_norm.index, 
+                    y=df_norm[tk], 
+                    mode='lines', 
+                    name=tk,
+                    hovertemplate='%{y:.2f}'
+                ))
+            
+            fig_comp.update_layout(
+                title="RENDIMIENTO COMPARATIVO (BASE 100)",
+                plot_bgcolor='rgba(15, 23, 42, 0)',
+                paper_bgcolor='rgba(15, 23, 42, 0)',
+                font=dict(color='#E2E8F0'),
+                xaxis=dict(showgrid=True, gridcolor='rgba(51, 65, 85, 0.5)', gridwidth=1, title='Fecha'),
+                yaxis=dict(showgrid=True, gridcolor='rgba(51, 65, 85, 0.5)', gridwidth=1, title='Índice (Base 100)'),
+                hovermode='x unified',
+                margin=dict(l=40, r=40, t=60, b=40),
+                height=500,
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+            )
+            
+            st.plotly_chart(fig_comp, use_container_width=True)
+            
+            st.markdown("#### 📊 RETORNOS DEL PERIODO (TOTAL)")
+            cols = st.columns(min(len(comparative_tickers), 4) if len(comparative_tickers) > 0 else 1)
+            if len(comparative_tickers) > 0:
+                for i, tk in enumerate(comparative_tickers[:4]):
+                    ret_total = (df_norm[tk].iloc[-1] - 100)
+                    cols[i].metric(label=f"{tk}", value=f"{df_norm[tk].iloc[-1]:.2f} pts", delta=f"{ret_total:.2f}%")
+                if len(comparative_tickers) > 4:
+                    st.caption(f"*Mostrando KPIs rápidos de los primeros 4 activos. ({len(comparative_tickers)} listados en gráfica).*")
+
+    elif vista_actual == "TÉCNICO / MOMENTUM":
         c_head, c_select = st.columns([3, 1])
         c_head.markdown("### INSPECCION DE PRECIO Y MOMENTUM ESTRUCTURAL")
         ticker_tec = c_select.selectbox("SELECCIONAR ACTIVO BASE:", valid_tickers, index=None, placeholder="Elegir Activo...", label_visibility="collapsed")
