@@ -1178,10 +1178,16 @@ def main():
                                 - RSI (Índice de Fuerza Relativa temporal): {rsi_now:.2f} (Recuerda: >70 es sobrecompra y riesgo de reversión, <30 es sobreventa y oportunidad).
                                 - Volatilidad Anualizada (Ventana corta): {vol_now:.2f} %
                                 
-                                Instrucciones: Escribe un informe de 2 párrafos para mi cliente. 
-                                El primer párrafo debe dar tu visión macro y técnica del activo basándote en esos números fríos sin emociones. 
-                                El segundo párrafo debe dar una recomendación clara (Acumular, Mantener, o Reducir Riesgo) y explicar por qué.
-                                Habla con tono extremadamente profesional, institucional y directo. Nada de saludos ni introducciones genéricas.
+                                INSTRUCCIONES ESTRICTAS DE ANÁLISIS:
+                                1. Tu interpretación debe ser puramente algorítmica y matemática.
+                                2. REGLA DE DIVERGENCIA MACD: Si observas (o deduces) que el MACD está alcista pero el precio real está cayendo fuertemente o perdiendo soportes clave (como la Media Móvil de 50 días - SMA 50), DEBES ignorar la señal de compra del MACD. Trátalo explícitamente como un "indicador rezagado (lagging)" o una "divergencia bajista", ya que el MACD tarda en procesar caídas verticales.
+                                3. GESTIÓN DE RIESGO: Si la volatilidad supera el 30% y hay debilidad en la acción del precio, la regla institucional dicta priorizar la reducción de exposición (Reducir Tamaño/Esperar) en lugar de buscar rebotes inmediatos, ya que el riesgo por unidad de beneficio es asimétrico en contra del operador.
+                                
+                                Escribe un informe de 2 párrafos para mi cliente:
+                                - PÁRRAFO 1: Diagnóstico macro y técnico del activo basado exclusivamente en lo empírico. Menciona los riesgos de volatilidad y la relación del precio con indicadores tendenciales vs rezagados.
+                                - PÁRRAFO 2: Recomendación clara (Acumular, Mantener, o Reducir Riesgo) fundamentando por qué desde una óptica de preservación de capital institucional.
+                                
+                                Habla con tono extremadamente profesional, crudo y directo. Nada de saludos ni introducciones genéricas.
                                 """
                                 
                                 # Llamada al LLM
@@ -1273,7 +1279,9 @@ def main():
                         API_KEY = "AIzaSyDStCEJ-Ezv865wKjwqDLES8uVQfhVB1vo"
                         genai.configure(api_key=API_KEY)
                         model = genai.GenerativeModel('gemini-1.5-flash')
-                        prompt = f"Actúa como un Gestor de Fondos Institucional. Analiza el activo {t_rep} que tiene un retorno anualizado de {ret_anu:.2f}%, volatilidad de {vol_anu:.2f}% y un Max Drawdown de {drawdown:.2f}%. Redacta un solo párrafo estrictamente corporativo, serio y sofisticado (máximo 80 palabras) concluyendo su viabilidad para añadir a cartera."
+                        prompt = f"""Actúa como un Gestor de Fondos Institucional. Analiza el activo {t_rep} que tiene un retorno anualizado de {ret_anu:.2f}%, volatilidad de {vol_anu:.2f}% y un Max Drawdown de {drawdown:.2f}%. 
+                        REGLA DE RIESGO: Si el activo sufre caídas abruptas recientes por debajo de su SMA 50, advierte sobre posibles divergencias engañosas en indicadores rezagados como el MACD y sugiere reducir exposición.
+                        Redacta un solo párrafo estrictamente corporativo, serio y sofisticado (máximo 80 palabras) concluyendo su viabilidad para añadir a cartera basándote solo en números fríos."""
                         response = model.generate_content(prompt)
                         texto_ia = response.text.replace('*', '').strip()
                     except Exception as e:
