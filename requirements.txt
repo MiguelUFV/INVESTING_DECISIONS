@@ -5,7 +5,7 @@ yfinance
 scipy
 numpy
 plotly
-kaleido
+kaleido==0.1.0
 openpyxl
 scikit-learn
 vaderSentiment

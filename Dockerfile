@@ -16,6 +16,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
+    chromium \
     && rm -rf /var/lib/apt/lists/*
 
 # Copia binarios de dependencia y pre-instala. Cero cache para menor peso del build
