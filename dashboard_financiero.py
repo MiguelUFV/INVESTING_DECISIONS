@@ -217,6 +217,7 @@ def load_market_data(tickers: list, start_date: str, end_date: str) -> pd.DataFr
 
 # --- MATEMATICA CUANTITATIVA ---
 
+@st.cache_data(show_spinner=False)
 def calculate_technical_indicators(series: pd.Series) -> pd.DataFrame:
     df = pd.DataFrame({'Close': series})
     df['Retorno_Diario'] = df['Close'].pct_change()
@@ -238,6 +239,7 @@ def calculate_technical_indicators(series: pd.Series) -> pd.DataFrame:
     df['MACD_Hist'] = df['MACD'] - df['Signal_Line']
     return df
 
+@st.cache_data(show_spinner=False)
 def get_performance_metrics(asset_returns: pd.Series, market_returns: pd.Series, risk_free_rate: float):
     df = pd.concat({'asset': asset_returns, 'market': market_returns}, axis=1).dropna()
     if len(df) < 2: return None
