@@ -137,6 +137,27 @@ st.markdown("""
         border: 1px solid rgba(255,255,255,0.05);
     }
     
+    /* Convertir Radio Buttons del Sidebar en Cajas Interactivas (Menú) */
+    [data-testid="stSidebar"] div[role="radiogroup"] > label {
+        background-color: rgba(30, 41, 59, 0.5) !important;
+        padding: 0.75rem 1rem !important;
+        border-radius: 10px !important;
+        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        margin-bottom: 0.5rem !important;
+        transition: all 0.2s ease !important;
+        cursor: pointer !important;
+    }
+    [data-testid="stSidebar"] div[role="radiogroup"] > label:hover {
+        background-color: rgba(56, 189, 248, 0.1) !important;
+        border-color: rgba(56, 189, 248, 0.3) !important;
+        transform: translateX(3px);
+    }
+    [data-testid="stSidebar"] div[role="radiogroup"] > label[data-checked="true"] {
+        background-color: rgba(56, 189, 248, 0.15) !important;
+        border-color: #38BDF8 !important;
+        box-shadow: 0 0 10px rgba(56, 189, 248, 0.1);
+    }
+    
     hr { border-color: rgba(255,255,255,0.05) !important; margin: 1.5rem 0;}
     
     /* Text Inputs y Text Areas */
@@ -664,9 +685,27 @@ def main():
         if not comparative_tickers:
             st.warning("Selecciona al menos un activo para visualizar la gráfica comparativa.")
         else:
-            df_norm = (df_close[comparative_tickers] / df_close[comparative_tickers].iloc[0]) * 100
+            fecha_min = df_close.index.min().date()
+            fecha_max = df_close.index.max().date()
             
-            fig_comp = go.Figure()
+            rango_fechas = st.slider(
+                "Filtrar Rango de Fechas:",
+                min_value=fecha_min,
+                max_value=fecha_max,
+                value=(fecha_min, fecha_max),
+                format="DD/MM/YYYY"
+            )
+            
+            mask = (df_close.index.date >= rango_fechas[0]) & (df_close.index.date <= rango_fechas[1])
+            df_filtered = df_close.loc[mask, comparative_tickers]
+            
+            if df_filtered.empty:
+                st.warning("Seleccione un rango de fechas con datos disponibles.")
+            else:
+                # Normalizamos usando el primer valor DENTRO del nuevo rango de fechas (Base 100)
+                df_norm = (df_filtered / df_filtered.iloc[0]) * 100
+                
+                fig_comp = go.Figure()
             for tk in comparative_tickers:
                 # Usar los colores de la app si es posible, pero Plotly asigna colores automáticos bien para muchas líneas
                 fig_comp.add_trace(go.Scatter(
