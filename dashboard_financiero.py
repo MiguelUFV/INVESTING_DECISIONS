@@ -483,6 +483,12 @@ def main():
                             st.rerun()
                         else:
                             st.error("Credenciales inválidas, formato de correo incorrecto o cuenta inexistente.")
+                
+                st.markdown("---")
+                if st.button("Entrar sin cuenta (Modo Invitado)", use_container_width=True):
+                    st.session_state.authenticated = True
+                    st.session_state.username = "Invitado"
+                    st.rerun()
                             
             with tab_register:
                 with st.form("register_form"):
