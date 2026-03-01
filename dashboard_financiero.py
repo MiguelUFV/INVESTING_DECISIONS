@@ -1196,7 +1196,7 @@ def main():
                                 """
                                 
                                 # Llamada al LLM
-                                model = genai.GenerativeModel('gemini-1.5-flash')
+                                model = genai.GenerativeModel('gemini-pro')
                                 response = model.generate_content(prompt)
                                 
                                 # Presentación de la Interfaz
@@ -1283,7 +1283,7 @@ def main():
                     try:
                         API_KEY = "AIzaSyDStCEJ-Ezv865wKjwqDLES8uVQfhVB1vo"
                         genai.configure(api_key=API_KEY)
-                        model = genai.GenerativeModel('gemini-1.5-flash')
+                        model = genai.GenerativeModel('gemini-pro')
                         
                         try:
                             with open('knowledge_base_ta.txt', 'r', encoding='utf-8') as f:
