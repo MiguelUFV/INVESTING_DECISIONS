@@ -1053,12 +1053,11 @@ def main():
                     df_ai = df_ai.dropna()
                     
                     if len(df_ai) > 50:
-                        try:
-                            from sklearn.ensemble import RandomForestRegressor
-                            
-                            vars_in = ['Lag_1', 'Lag_2', 'SMA_10', 'Vol_10']
-                            X = df_ai[vars_in]
-                            y = df_ai['Target']
+                        from sklearn.ensemble import RandomForestRegressor
+                        
+                        vars_in = ['Lag_1', 'Lag_2', 'SMA_10', 'Vol_10']
+                        X = df_ai[vars_in]
+                        y = df_ai['Target']
                     with st.spinner("Despertando Agente de Inteligencia Artificial (Gemini Pro)..."):
                         try:
                             # Configurar API Key del usuario
