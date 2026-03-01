@@ -17,7 +17,6 @@ import logging
 try:
     from sklearn.ensemble import RandomForestRegressor
     from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-    import google.generativeai as genai
 except ImportError:
     pass
 
@@ -490,46 +489,12 @@ def main():
         
         c1, c2, c3 = st.columns([1, 1.5, 1])
         with c2:
-            tab_login, tab_register = st.tabs(["INICIAR SESIÓN", "CREAR CUENTA"])
-            import database as db
-            
-            with tab_login:
-                with st.form("login_form"):
-                    u_login = st.text_input("Correo Electrónico Corporativo")
-                    p_login = st.text_input("Contraseña Autenticada", type="password")
-                    if st.form_submit_button("Entrar a la Terminal", type="primary", use_container_width=True):
-                        if "@" in u_login and db.authenticate_user(u_login, p_login):
-                            st.session_state.authenticated = True
-                            st.session_state.username = u_login
-                            st.rerun()
-                        else:
-                            st.error("Credenciales inválidas, formato de correo incorrecto o cuenta inexistente.")
-                
-                st.markdown("---")
-                if st.button("Entrar sin cuenta (Modo Invitado)", use_container_width=True):
-                    st.session_state.authenticated = True
-                    st.session_state.username = "Invitado"
-                    st.rerun()
-                            
-            with tab_register:
-                with st.form("register_form"):
-                    st.markdown("**CREACIÓN DE IDENTIDAD DIGITAL**")
-                    u_reg = st.text_input("Nuevo Correo Electrónico Corporativo")
-                    p_reg = st.text_input("Nueva Contraseña", type="password")
-                    
-                    st.markdown("---")
-                    gdpr_check = st.checkbox("Declaro que entiendo y acepto que AURA WEALTH OS almacene este correo en sus servidores en la nube para garantizar mi acceso y proveer la funcionalidad analítica solicitada, usando cookies técnicas de sesión. (GDPR Compliance)", value=False)
-                    
-                    if st.form_submit_button("Registrar Identidad", type="primary", use_container_width=True):
-                        if not gdpr_check:
-                            st.warning("⚠️ Debes aceptar la política de almacenamiento en la nube (GDPR) para crear una cuenta institucional.")
-                        elif "@" in u_reg and len(u_reg) > 5 and len(p_reg) > 3:
-                            if db.create_user(u_reg, p_reg):
-                                st.success("Identidad aprovisionada existosamente en la Nube. Ya puede Iniciar Sesión en la pestaña adjunta.")
-                            else:
-                                st.error("El correo electrónico ya está registrado en la plataforma.")
-                        else:
-                            st.error("Debe usar un formato de correo corporativo válido y credenciales robustas.")
+            st.markdown("---")
+            if st.button("ACCEDER A LA TERMINAL DE ANÁLISIS", type="primary", use_container_width=True):
+                st.session_state.authenticated = True
+                st.session_state.username = "Trader Local"
+                st.rerun()
+            st.markdown("---")
         return
 
     # Header Principal Dashboard (Reemplaza el antiguo h1/p)
@@ -553,7 +518,7 @@ def main():
     """, unsafe_allow_html=True)
     
     with st.sidebar:
-        st.markdown(f"**Inversor Autorizado:** `{st.session_state.username}`")
+        st.markdown(f"**Usuario Local:** `{st.session_state.username}`")
         if st.button("Finalizar Sesión", use_container_width=True):
             st.session_state.authenticated = False
             st.session_state.username = None
@@ -1010,10 +975,9 @@ def main():
 
     elif vista_actual == "MI PORTAFOLIO":
         st.markdown("### VALORACION DE CARTERA Y PnL EN VIVO")
-        st.markdown("Sistema sincronizado en la Nube. Carga tus activos y valídate para mantener la posición.")
-        import database as db
+        st.markdown("Sistema local de sesión. Carga tus activos para realizar la valoración temporal (no se guarda en la nube).")
         
-        saved_port = db.load_portfolio(st.session_state.username)
+        saved_port = {}
         
         if valid_tickers:
             with st.form("portfolio_form"):
@@ -1027,14 +991,8 @@ def main():
                 c_b1, c_b2 = st.columns(2)
                 with c_b1:
                     port_submit = st.form_submit_button("COMPUTAR VALORACION (TEMPORAL)", type="primary", use_container_width=True)
-                with c_b2:
-                    save_submit = st.form_submit_button("☁️ GUARDAR CARTERA EN BASE DE DATOS", use_container_width=True)
             
-            if save_submit:
-                db.save_portfolio(st.session_state.username, shares)
-                st.success(f"Portafolio guardado correctamente en la cuenta de '{st.session_state.username}'.")
-                
-            if port_submit or sum(shares.values()) > 0:
+            if port_submit:
                 total_val = 0
                 st.markdown("#### DESGLOSE NOMINAL DE POSICIONES")
                 c1, c2, c3, c4 = st.columns(4)
@@ -1155,63 +1113,39 @@ def main():
                         X = df_ai[vars_in]
                         y = df_ai['Target']
                         
-                        with st.spinner("Despertando Agente de Inteligencia Artificial (Gemini Pro)..."):
-                            try:
-                                import google.generativeai as genai
-                                
-                                # Configurar API Key del usuario
-                                genai.configure(api_key="AIzaSyDStCEJ-Ezv865wKjwqDLES8uVQfhVB1vo")
-                                
-                                # Recopilar Contexto Matemático para el LLM
-                                df_ml = calculate_technical_indicators(df_close[t_ai])
-                                current_pr = df_ml['Close'].iloc[-1]
-                                rsi_now = df_ml['RSI_14'].iloc[-1]
-                                vol_now = df_ml['Volatilidad_20d'].iloc[-1] * 100
-                                
-                                # Cargar la Base de Conocimiento Financiero
-                                try:
-                                    with open('knowledge_base_ta.txt', 'r', encoding='utf-8') as f:
-                                        knowledge_base = f.read()
-                                except FileNotFoundError:
-                                    knowledge_base = ""
-
-                                # Crear el Prompt del Analista
-                                prompt = f"""
-                                Base de Conocimientos Institucional a seguir de manera inquebrantable:
-                                {knowledge_base}
-                                
-                                Actúa como un gestor de fondos de cobertura senior y analista cuantitativo institucional.
-                                Estoy analizando el activo financiero {t_ai}.
-                                
-                                Aquí tienes sus últimos datos técnicos calculados hoy por mi motor:
-                                - Precio de cierre actual: {current_pr:.2f} $
-                                - RSI (Índice de Fuerza Relativa temporal): {rsi_now:.2f} (Recuerda: >70 es sobrecompra y riesgo de reversión, <30 es sobreventa y oportunidad).
-                                - Volatilidad Anualizada (Ventana corta): {vol_now:.2f} %
-                                
-                                Escribe un informe de 2 párrafos para mi cliente aplicando las reglas estrictas de la Base de Conocimientos proveída:
-                                - PÁRRAFO 1: Diagnóstico macro y técnico del activo basado exclusivamente en lo empírico. Evalúa explícitamente posibles divergencias de indicadores rezagados.
-                                - PÁRRAFO 2: Recomendación clara (Acumular, Mantener, o Reducir Riesgo) fundamentando tu decisión en la gestión de riesgo por volatilidad.
-                                
-                                Habla con tono extremadamente profesional, crudo y directo. Nada de saludos ni introducciones genéricas.
-                                """
-                                
-                                # Llamada al LLM
-                                model = genai.GenerativeModel('gemini-pro')
-                                response = model.generate_content(prompt)
-                                
-                                # Presentación de la Interfaz
-                                c1, c2, c3 = st.columns(3)
-                                c1.metric("PRECIO HOY", f"{current_pr:.2f} $")
-                                c2.metric("RSI INSTANTÁNEO", f"{rsi_now:.2f}", delta="Sobrecomprado" if rsi_now>70 else ("Sobrevendido" if rsi_now<30 else "Neutral"), delta_color="inverse")
-                                c3.metric("MODELO LLM", f"Gemini 1.5 Pro")
-                                
-                                st.markdown("### 🧠 SÍNTESIS DEL AGENTE (LLM INSIGHTS)")
-                                st.info(response.text)
-                                
-                                st.caption("Nota: Este análisis es generado en tiempo real por una IA basándose en los parámetros técnicos actuales y no constituye asesoramiento financiero vinculante.")
-
-                            except Exception as e:
-                                st.error(f"Error de conexión con IA Cuántica: {e}. Revisa la validez de la clave.")
+                        with st.spinner("Procesando Analíticas Cuantitativas..."):
+                            df_ml = calculate_technical_indicators(df_close[t_ai])
+                            current_pr = df_ml['Close'].iloc[-1]
+                            rsi_now = df_ml['RSI_14'].iloc[-1]
+                            vol_now = df_ml['Volatilidad_20d'].iloc[-1] * 100
+                            
+                            # Lógica Determinista de Diagnóstico
+                            if current_pr < df_ml['SMA_50'].iloc[-1] and vol_now > 30:
+                                rec = "REDUCIR EXPOSICIÓN"
+                                diag = "Estructura bajista severa bajo SMA 50 combinada con volatilidad crítica (riesgo asimétrico)."
+                            elif rsi_now < 30 and current_pr > df_ml['SMA_50'].iloc[-1]:
+                                rec = "ACUMULAR"
+                                diag = "Sobreventa temporal en osciladores mientras se mantiene la tendencia estructural primaria alcista."
+                            elif rsi_now > 70:
+                                rec = "MANTENER TAMAÑO / CAUTELA"
+                                diag = "Niveles de sobrecompra extremos. Riesgo estadístico elevado de reversión inminente a la media."
+                            elif current_pr < df_ml['SMA_50'].iloc[-1]:
+                                rec = "MANTENER LIQUIDEZ"
+                                diag = "Debilidad estructural. El precio cotiza por debajo de los promedios institucionales clave."
+                            else:
+                                rec = "MANTENER"
+                                diag = "Estructura técnica neutral navegando dentro de la volatilidad y los parámetros estándar."
+                            
+                            # Presentación de la Interfaz
+                            c1, c2, c3 = st.columns(3)
+                            c1.metric("PRECIO HOY", f"{current_pr:.2f} $")
+                            c2.metric("RSI INSTANTÁNEO", f"{rsi_now:.2f}", delta="Sobrecomprado" if rsi_now>70 else ("Sobrevendido" if rsi_now<30 else "Neutral"), delta_color="inverse")
+                            c3.metric("MOTOR LÓGICO", "Algoritmo Matemático V2")
+                            
+                            st.markdown("### 🧠 SÍNTESIS TÉCNICA (NÚCLEO CUANTITATIVO)")
+                            st.info(f"**DIAGNÓSTICO ESTRUCTURAL:** {diag}\n\n**POSICIONAMIENTO INSTITUCIONAL:** {rec}")
+                            
+                            st.caption("Nota: Este análisis estático proviene de reglas matemáticas en tiempo real integradas en el pipeline sin uso de APIs externas.")
                     else:
                         st.error("NO HAY SUFICIENTES DATOS HISTÓRICOS PARA ENTRENAR LA RED MULTICAPA.")
     elif vista_actual == "BACKTESTER":
@@ -1278,30 +1212,8 @@ def main():
                     img_path = f"tear_sheet_chart_{t_rep}.png"
                     fig_pdf.write_image(img_path, engine="kaleido", scale=2)
                     
-                    # 3. Prompt LLM para Análisis NLP
-                    texto_ia = "Análisis Neuronal no disponible (API Key de Gemini no configurada correctamente en entorno o sistema inalcanzable)."
-                    try:
-                        API_KEY = "AIzaSyDStCEJ-Ezv865wKjwqDLES8uVQfhVB1vo"
-                        genai.configure(api_key=API_KEY)
-                        model = genai.GenerativeModel('gemini-pro')
-                        
-                        try:
-                            with open('knowledge_base_ta.txt', 'r', encoding='utf-8') as f:
-                                kb_pdf = f.read()
-                        except FileNotFoundError:
-                            kb_pdf = ""
-                            
-                        prompt = f"""
-                        Base de Conocimientos Institucional a seguir estrictamente:
-                        {kb_pdf}
-                        
-                        Actúa como un Gestor de Fondos Institucional. Analiza el activo {t_rep} que tiene un retorno anualizado de {ret_anu:.2f}%, volatilidad de {vol_anu:.2f}% y un Max Drawdown de {drawdown:.2f}%. 
-                        Redacta un solo párrafo estrictamente corporativo, serio y sofisticado (máximo 80 palabras) concluyendo su viabilidad para añadir a cartera basándote en la base de conocimientos inyectada.
-                        """
-                        response = model.generate_content(prompt)
-                        texto_ia = response.text.replace('*', '').strip()
-                    except Exception as e:
-                         pass
+                    # 3. NLP Prompt Reemplazado por Texto Determinista
+                    texto_ia = f"SÍNTESIS ALGORÍTMICA: El activo {t_rep} evidencia un Retorno Anualizado de {ret_anu:.2f}% frente a una Volatilidad Base Histórica de {vol_anu:.2f}%. Contabilizando un Max Drawdown de {drawdown:.2f}%, el perfil de riesgo-retorno exige estricta vigilancia sobre la Media Móvil Estructural (SMA 50) para evitar trampas de liquidez y divergencias en los momentum rezagados."
                     
                     # 4. Compilar FPDF
                     class PDF(FPDF):
