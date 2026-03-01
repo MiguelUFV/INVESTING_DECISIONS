@@ -572,8 +572,8 @@ def main():
             with c_m3:
                 st.markdown("**MATERIAS PRIMAS Y MACRO (ETFs)**")
                 macro_etf = st.multiselect("Defensivo e Índices", 
-                    ["SPY", "QQQ", "DIA", "IWM", "EFA", "EEM", "TLT", "IEF", "GLD", "SLV", "USO", "UNG", "UUP", "VIXY"], 
-                    default=["SPY", "TLT"], label_visibility="collapsed")
+                    ["GC=F", "SPY", "QQQ", "DIA", "IWM", "EFA", "EEM", "TLT", "IEF", "GLD", "SLV", "USO", "UNG", "UUP", "VIXY"], 
+                    default=["GC=F", "SPY", "TLT"], label_visibility="collapsed")
                 st.markdown("<br>**CRIPTOACTIVOS (Top Market Cap)**", unsafe_allow_html=True)
                 crypto = st.multiselect("Ecosistema Digital", 
                     ["BTC-USD", "ETH-USD", "SOL-USD", "BNB-USD", "XRP-USD", "ADA-USD", "AVAX-USD", "DOGE-USD", "DOT-USD", "LINK-USD", "MATIC-USD", "LTC-USD"], 

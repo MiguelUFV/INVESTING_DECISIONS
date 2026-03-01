@@ -7,7 +7,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 # API oficial de SheetDB conectada al Excel de Miguel
-SHEETDB_URL = "https://sheetdb.io/api/v1/q8oe02avgnyth"
+SHEETDB_URL = "https://sheetdb.io/api/v1/uxvd67ii9eboo"
 
 # Configuración SMTP - Datos a ser reemplazados en despliegue
 SMTP_SERVER = "smtp.gmail.com"
