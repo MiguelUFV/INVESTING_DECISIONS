@@ -454,8 +454,8 @@ def main():
     if not st.session_state.authenticated:
         st.markdown("""
         <div style="text-align: center; margin-top: 12vh; margin-bottom: 3rem;">
-            <div style="display:inline-block; padding: 1rem; background: rgba(56, 189, 248, 0.1); border-radius: 50%; margin-bottom: 1rem; border: 1px solid rgba(56, 189, 248, 0.2);">
-                <span style="font-size: 3rem;">⚡</span>
+            <div style="display:inline-block; padding: 1.5rem; background: rgba(56, 189, 248, 0.05); border-radius: 20px; margin-bottom: 1rem; border: 1px solid rgba(56, 189, 248, 0.2); box-shadow: 0 0 30px rgba(56, 189, 248, 0.1);">
+                <span style="font-size: 3rem; font-weight: 900; background: -webkit-linear-gradient(45deg, #38BDF8, #818CF8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">AW</span>
             </div>
             <h1 style="font-size: 4rem; letter-spacing: -0.05em; margin-bottom: 0; background: -webkit-linear-gradient(45deg, #38BDF8, #818CF8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">AURA WEALTH OS</h1>
             <p style="color: #94A3B8; font-size: 1.2rem; font-weight: 400; letter-spacing: 0.02em;">Portal de Autenticación Institucional</p>
@@ -469,28 +469,28 @@ def main():
             
             with tab_login:
                 with st.form("login_form"):
-                    u_login = st.text_input("Usuario (Ej: admin)")
-                    p_login = st.text_input("Contraseña", type="password")
+                    u_login = st.text_input("Correo Electrónico Corporativo")
+                    p_login = st.text_input("Contraseña Autenticada", type="password")
                     if st.form_submit_button("Entrar a la Terminal", type="primary", use_container_width=True):
-                        if db.authenticate_user(u_login, p_login):
+                        if "@" in u_login and db.authenticate_user(u_login, p_login):
                             st.session_state.authenticated = True
                             st.session_state.username = u_login
                             st.rerun()
                         else:
-                            st.error("Credenciales inválidas o cuenta inexistente.")
+                            st.error("Credenciales inválidas, formato de correo incorrecto o cuenta inexistente.")
                             
             with tab_register:
                 with st.form("register_form"):
-                    u_reg = st.text_input("Nuevo Usuario")
+                    u_reg = st.text_input("Nuevo Correo Electrónico Corporativo")
                     p_reg = st.text_input("Nueva Contraseña", type="password")
-                    if st.form_submit_button("Registrar Cuenta", type="primary", use_container_width=True):
-                        if len(u_reg) > 2 and len(p_reg) > 2:
+                    if st.form_submit_button("Registrar Identidad", type="primary", use_container_width=True):
+                        if "@" in u_reg and len(u_reg) > 5 and len(p_reg) > 3:
                             if db.create_user(u_reg, p_reg):
-                                st.success("Cuenta aprovisionada. Ya puedes Iniciar Sesión.")
+                                st.success("Identidad aprovisionada. Ya puede Iniciar Sesión en la pestaña adjunta.")
                             else:
-                                st.error("El nombre de usuario ya está registrado en el sistema.")
+                                st.error("El correo electrónico ya está registrado en la plataforma.")
                         else:
-                            st.error("Las credenciales deben tener 3 o más caracteres.")
+                            st.error("Debe usar un formato de correo corporativo válido y credenciales robustas.")
         return
 
     # Header Principal Dashboard (Reemplaza el antiguo h1/p)
@@ -498,7 +498,7 @@ def main():
     <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 2rem; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(12px); border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 2rem; box-shadow: 0 4px 20px -2px rgba(0,0,0,0.2);">
         <div style="display: flex; align-items: center; gap: 15px;">
             <div style="height: 40px; width: 40px; background: linear-gradient(135deg, #38BDF8, #818CF8); border-radius: 10px; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);">
-                <span style="color: white; font-weight: 800; font-size: 1.2rem;">⚡</span>
+                <span style="color: white; font-weight: 900; font-size: 1.1rem; letter-spacing: -0.05em;">AW</span>
             </div>
             <div>
                 <h1 style="margin: 0; padding: 0; font-size: 1.8rem; letter-spacing: -0.03em; color: white !important;">AURA WEALTH OS</h1>
@@ -507,107 +507,102 @@ def main():
         </div>
         <div style="text-align: right; display: flex; align-items: center; gap: 1rem;">
             <div style="display: inline-block; padding: 0.4rem 1rem; border-radius: 20px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); color: #10B981; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em;">
-                🟢 LIVE MARKET DTLK
+                LIVE MARKET DTLK
             </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
     
     with st.sidebar:
-        st.markdown(f"**👤 Inversor Conectado:** `{st.session_state.username}`")
-        if st.button("Cerrar Sesión", use_container_width=True):
+        st.markdown(f"**Inversor Autorizado:** `{st.session_state.username}`")
+        if st.button("Finalizar Sesión", use_container_width=True):
             st.session_state.authenticated = False
             st.session_state.username = None
+            if "df_close" in st.session_state:
+                del st.session_state["df_close"]
             st.rerun()
             
-        with st.expander("🚨 ALERTAS PASIVAS Y NOTIFICACIONES", expanded=False):
-            st.markdown("Configura alertas por email cuando tus inversiones rompan soportes críticos o el mercado colapse.")
-            email_input = st.text_input("Correo de Destino", placeholder="ejemplo@inversor.com")
-            var_alert = st.slider("Alerta si VaR supera (%)", 5, 20, 10)
-            if st.button("Activar Centinela"):
-                st.success(f"Centinela en la BD configurado para: {email_input}")
-                st.toast("SMTP Simulador: Escaneando umbrales en Background.")
-            
+        with st.expander("ALERTAS DE VOLATILIDAD", expanded=False):
+            st.markdown("Configura notificaciones externas para brechas de VaR predictivo.")
+            email_input = st.text_input("Correo Escolta", placeholder="riesgos@institucion.com")
+            var_alert = st.slider("Trigger VaR Condicional (%)", 5, 20, 10)
+            if st.button("Compilar Trigger"):
+                st.success(f"Regla insertada para: {email_input}")
+
+    if "df_close" not in st.session_state:
+        st.markdown("<br>", unsafe_allow_html=True)
         with st.form("filtros_globales", clear_on_submit=False):
-            st.markdown("<h3>PARAMETROS DE ENTORNO</h3>", unsafe_allow_html=True)
+            st.markdown("### CONFIGURACIÓN ESTRUCTURAL DE CARTERA")
+            st.markdown("Defina los universos de inversión para iniciar el análisis cuantitativo. Ajuste la tasa libre de riesgo según las letras del Tesoro vigentes.")
             st.markdown("<hr>", unsafe_allow_html=True)
             
-            st.markdown("#### CONFIGURACION DE ACTIVOS")
-            
             tickers_selected = []
-            with st.expander("🌍 BASE DE DATOS GLOBAL DE ACTIVOS", expanded=True):
-                st.markdown("**🇺🇸 USA: TECNOLOGÍA E IA (Nasdaq)**")
+            
+            c_m1, c_m2, c_m3 = st.columns(3)
+            with c_m1:
+                st.markdown("**USA: TECNOLOGÍA E IA (Nasdaq)**")
                 us_tech = st.multiselect("Big Tech & Semiconductores", 
                     ["AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "META", "TSLA", "AVGO", "CRM", "AMD", "ADBE", "NFLX", "CSCO", "INTC", "QCOM", "IBM", "ORCL", "NOW"], 
-                    default=["AAPL", "MSFT"], help="Gigantes tecnológicos y arquitectos de Inteligencia Artificial.")
-                
-                st.markdown("**🇺🇸 USA: VALOR, FINANZAS Y SALUD (S&P 500)**")
+                    default=["AAPL", "MSFT"], label_visibility="collapsed")
+                st.markdown("<br>**USA: VALOR, FINANZAS Y SALUD**", unsafe_allow_html=True)
                 us_fin = st.multiselect("Banca, Consumo y Farma", 
                     ["JPM", "V", "MA", "BAC", "WFC", "GS", "MS", "BRK-B", "JNJ", "UNH", "LLY", "ABBV", "MRK", "PFE", "PG", "KO", "PEP", "WMT", "COST", "HD", "MCD", "DIS", "NKE"], 
-                    default=[], help="Bancos de Wall Street y gigantes defensivos de la vieja economía.")
-                
-                st.markdown("**🇪🇺 EUROPA Y ESPAÑA (EuroStoxx & IBEX 35)**")
-                eu_stocks = st.multiselect("Gran Capitalización Europea", 
+                    default=[], label_visibility="collapsed")
+            with c_m2:
+                st.markdown("**EUROPA Y ESPAÑA**")
+                eu_stocks = st.multiselect("Gran Capitalización", 
                     ["ASML", "SAP", "SIE.DE", "MC.PA", "AIR.PA", "OR.PA", "SAN.MC", "BBVA.MC", "IBE.MC", "ITX.MC", "REP.MC", "TEF.MC", "CABK.MC", "AENA.MC", "FER.MC"], 
-                    default=[], help="Industria del lujo, matriz de microchips europea y pesos pesados españoles (Añaden el sufijo .MC, .PA, .DE)")
-
-                st.markdown("**🌏 ASIA Y MERCADOS EMERGENTES**")
-                asia_latam = st.multiselect("Dragones Asiáticos y LATAM", 
+                    default=[], label_visibility="collapsed")
+                st.markdown("<br>**ASIA Y EMERGENTES**", unsafe_allow_html=True)
+                asia_latam = st.multiselect("Dragones y LATAM", 
                     ["TSM", "BABA", "JD", "BIDU", "7203.T", "6758.T", "9984.T", "005930.KS", "VALE", "PBR", "MELI", "NU"], 
-                    default=[], help="Semiconductores de Taiwan, Ecommerce Chino, gigantes Japoneses (Toyota/Sony) y unicornios de Latam.")
-                
-                st.markdown("**🛢️ MATERIAS PRIMAS Y MACRO (ETFs)**")
-                macro_etf = st.multiselect("Oro, Petróleo, Bonos e Índices", 
+                    default=[], label_visibility="collapsed")
+            with c_m3:
+                st.markdown("**MATERIAS PRIMAS Y MACRO (ETFs)**")
+                macro_etf = st.multiselect("Defensivo e Índices", 
                     ["SPY", "QQQ", "DIA", "IWM", "EFA", "EEM", "TLT", "IEF", "GLD", "SLV", "USO", "UNG", "UUP", "VIXY"], 
-                    default=["SPY", "TLT"], help="SPY=S&P500, QQQ=Nasdaq, TLT=Bonos 20 años, GLD=Oro Físico, USO=Petróleo Crudo.")
-
-                st.markdown("**🪙 CRIPTOACTIVOS (Top Market Cap)**")
-                crypto = st.multiselect("Ecosistema Blockchain", 
+                    default=["SPY", "TLT"], label_visibility="collapsed")
+                st.markdown("<br>**CRIPTOACTIVOS (Top Market Cap)**", unsafe_allow_html=True)
+                crypto = st.multiselect("Ecosistema Digital", 
                     ["BTC-USD", "ETH-USD", "SOL-USD", "BNB-USD", "XRP-USD", "ADA-USD", "AVAX-USD", "DOGE-USD", "DOT-USD", "LINK-USD", "MATIC-USD", "LTC-USD"], 
-                    default=[], help="Activos digitales que cotizan 24/7 de estrés algorítmico extremo.")
-                
-                st.markdown("**🛠️ CAJA FUERTE: CUALQUIER OTRA EMPRESA DEL MUNDO**")
-                custom_tickers = st.text_input("Buscador Libre (Tickers Manuales)", value="", placeholder="Ej: F, GM, PLTR, RKLB, RIVN", help="Hay más de 60.000 acciones en el mundo. Si no está en las listas rápidas de arriba, escribe aquí su 'Ticker' de Yahoo Finance separado por comas.")
-                
-                tickers_selected.extend(us_tech + us_fin + eu_stocks + asia_latam + macro_etf + crypto)
-                if custom_tickers:
-                    tickers_selected.extend([t.strip().upper() for t in custom_tickers.split(',') if t.strip()])
+                    default=[], label_visibility="collapsed")
+
+            st.markdown("<br>**BÚSQUEDA LIBRE DE TICKERS GLOBALES:**", unsafe_allow_html=True)
+            custom_tickers = st.text_input("Ingrese símbolos de Yahoo Finance separados por comas", value="", placeholder="Ej: F, GM, PLTR, RKLB")
             
-            st.markdown("#### HORIZONTE TEMPORAL")
-            col_d1, col_d2 = st.columns(2)
-            with col_d1: start_date = st.date_input("INICIO", value=pd.to_datetime('2023-01-01'), help="Día en el que empezamos a recolectar datos pasados.")
-            with col_d2: end_date = st.date_input("FIN", value=pd.to_datetime('today'), help="Último día a analizar (normalmente, hoy).")
+            tickers_selected.extend(us_tech + us_fin + eu_stocks + asia_latam + macro_etf + crypto)
+            if custom_tickers:
+                tickers_selected.extend([t.strip().upper() for t in custom_tickers.split(',') if t.strip()])
             
-            st.markdown("#### PARAMETROS DE RIESGO")
-            risk_free_val = st.number_input("TASA LIBRE DE RIESGO (Rf %)", value=4.0, step=0.1, help="Rendimiento de los bonos seguros de Gobierno. Si el banco te da un 4% seguro, invertir en bolsa debe exigirte dar MÁS de ese 4% para que merezca el riesgo.")
+            st.markdown("<hr>", unsafe_allow_html=True)
+            st.markdown("#### HORIZONTE DE DATOS Y PARAMETRÍA DE RIESGO")
+            col_d1, col_d2, col_d3 = st.columns(3)
+            with col_d1: start_date = st.date_input("FECHA DE INICIO", value=pd.to_datetime('2023-01-01'))
+            with col_d2: end_date = st.date_input("FECHA FINAL", value=pd.to_datetime('today'))
+            with col_d3: risk_free_val = st.number_input("TASA LIBRE DE RIESGO (Rf %)", value=4.0, step=0.1)
+                
             global RISK_FREE_RATE
             RISK_FREE_RATE = risk_free_val / 100.0
             
             st.markdown("<br>", unsafe_allow_html=True)
             run_btn = st.form_submit_button("INICIALIZAR MOTOR Y COMPILAR DATOS", type="primary", use_container_width=True)
 
-    if run_btn or "df_close" in st.session_state:
-        tickers_list = list(set(tickers_selected)) # Remove duplicates automatically
-        if not tickers_list:
-            st.error("LA CONFIGURACION REQUIERE UN ACTIVO COMO MINIMO.")
-            st.stop()
-
-        with st.spinner("Sintetizando series temporales via YFinance Core..."):
-            df_close, raw_data = load_market_data(tickers_list.copy(), start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'))
-            
-            if df_close.empty:
-                st.error("ERROR DE EJECUCION: LOS PARAMETROS TEMPORALES O NOMINALES NO PROPORCIONAN UNA SALIDA VALIDA EN LA API EXTERNA.")
+        if run_btn:
+            tickers_list = list(set(tickers_selected))
+            if not tickers_list:
+                st.error("LA CONFIGURACIÓN REQUIERE UN ACTIVO COMO MÍNIMO.")
                 st.stop()
-                
-            st.session_state["df_close"] = df_close
-            st.session_state["raw_data"] = raw_data
-            st.session_state["valid_tickers"] = [t for t in tickers_list if t in df_close.columns]
-            
-            if run_btn:
-                st.toast("✅ Motor Cuantitativo Iniciado. Tensor de datos vectorizado con éxito.")
 
-    if "df_close" not in st.session_state:
-        st.info("SISTEMA EN ESPERA. COMPLETE LA CONFIGURACION PARALELA Y ACTIVE EL MOTOR PARA DESPLIEGUE.")
+            with st.spinner("Sintetizando series temporales via YFinance Core..."):
+                df_close, raw_data = load_market_data(tickers_list.copy(), start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'))
+                if df_close.empty:
+                    st.error("ERROR DE EJECUCIÓN: LOS PARÁMETROS NO PROPORCIONAN UNA SALIDA VÁLIDA EN LA API EXTERNA.")
+                    st.stop()
+                    
+                st.session_state["df_close"] = df_close
+                st.session_state["raw_data"] = raw_data
+                st.session_state["valid_tickers"] = [t for t in tickers_list if t in df_close.columns]
+                st.rerun()
         st.stop()
 
     df_close = st.session_state["df_close"]
