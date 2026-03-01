@@ -1281,14 +1281,11 @@ def main():
                     pdf.set_font("helvetica", "", 11)
                     pdf.multi_cell(0, 6, f"NLP Engine Extract:\n\n{texto_ia}")
                     
-                    pdf_bytes = pdf.output(dest='S')
-                    try:
-                        if isinstance(pdf_bytes, str):
-                            pdf_bytes = pdf_bytes.encode('latin1')
-                        elif isinstance(pdf_bytes, bytearray):
-                            pdf_bytes = bytes(pdf_bytes)
-                    except Exception as e:
-                        pass
+                    raw_pdf = pdf.output()
+                    if isinstance(raw_pdf, str):
+                        pdf_bytes = raw_pdf.encode('latin1')
+                    else:
+                        pdf_bytes = bytes(raw_pdf)
                         
                     st.success(f"Tear Sheet Cuantitativo para {t_rep} Compilado con Éxito.")
                     st.download_button("📥 DESCARGAR INFORME OFFICIAL (.PDF)", data=pdf_bytes, file_name=f"TearSheet_{t_rep}_AuraWealth.pdf", mime="application/pdf", use_container_width=True)
