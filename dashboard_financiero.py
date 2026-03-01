@@ -615,14 +615,31 @@ def main():
     df_close = st.session_state["df_close"]
     valid_tickers = st.session_state["valid_tickers"]
     raw_data = st.session_state["raw_data"]
+    st.sidebar.markdown("<br>---<br>", unsafe_allow_html=True)
+    st.sidebar.markdown("### 🎛️ NAVEGACIÓN MÓDULOS")
+    
+    opciones_nav = [
+        "TÉCNICO / MOMENTUM", 
+        "RIESGO (CAPM)", 
+        "MONTE CARLO (VaR)", 
+        "ESTACIONALIDAD", 
+        "RADAR QUANT", 
+        "MARKOWITZ", 
+        "MI PORTAFOLIO", 
+        "MACRO & NOTICIAS", 
+        "AI FORECASTING", 
+        "BACKTESTER", 
+        "REPORTE PDF", 
+        "RAW DATA"
+    ]
+    
+    vista_actual = st.sidebar.radio("Ir a Módulo Analítico:", opciones_nav, label_visibility="collapsed")
+    
+    st.sidebar.markdown("---")
+    st.sidebar.caption("© 2026 Aura Wealth Quant Engine")
 
-    # --- 12 PESTANAS ESTRUCTURALES (ULTIMATE OS) ---
-    tab_tec, tab_quant, tab_oraculo, tab_season, tab_radar, tab_solver, tab_port, tab_fund, tab_ai, tab_backtest, tab_report, tab_data = st.tabs([
-        "TÉCNICO / MOMENTUM", "RIESGO (CAPM)", "MONTE CARLO (VaR)", "ESTACIONALIDAD", "RADAR QUANT", "MARKOWITZ", "MI PORTAFOLIO", "MACRO & NOTICIAS", "AI FORECASTING", "BACKTESTER", "REPORTE PDF", "RAW DATA"
-    ])
-
-    # --- TAB 1: DASHBOARD TECNICO + MACD/RSI ---
-    with tab_tec:
+    # --- ENRUTADOR DE VISTAS ---
+    if vista_actual == "TÉCNICO / MOMENTUM":
         c_head, c_select = st.columns([3, 1])
         c_head.markdown("### INSPECCION DE PRECIO Y MOMENTUM ESTRUCTURAL")
         ticker_tec = c_select.selectbox("SELECCIONAR ACTIVO BASE:", valid_tickers, label_visibility="collapsed")
@@ -729,8 +746,7 @@ def main():
                     df_weights = df_weights[df_weights['Asignación (%)'] > 0.5].sort_values(by='Asignación (%)', ascending=False)
                     st.dataframe(df_weights.style.format({'Asignación (%)': "{:.2f}%"}).bar(subset=['Asignación (%)'], color=COLOR_SMOKE, vmin=0, vmax=100), use_container_width=True)
 
-    # --- TAB 4: PROYECCION ESTOCASTICA ---
-    with tab_oraculo:
+    elif vista_actual == "MONTE CARLO (VaR)":
         c_head, c_select = st.columns([3, 1])
         c_head.markdown("### CAMINATA BROWNIANA Y METRICAS DE RIESGO DE COLA")
         t_mc = c_select.selectbox("SERIE OBJETIVO A 1-ANIO:", valid_tickers, label_visibility="collapsed")
@@ -758,8 +774,7 @@ def main():
                     
                     interpret_oraculo(sim_data, var_95)
 
-    # --- NUEVO TAB: ESTACIONALIDAD (SEASONALITY MATRIX) ---
-    with tab_season:
+    elif vista_actual == "ESTACIONALIDAD":
         st.markdown("### ESTACIONALIDAD MATEMÁTICA ANUAL")
         st.markdown("Mapa de calor histórico para detectar estadísticamente en qué meses una acción suele subir o colapsar de media.")
         
@@ -799,8 +814,7 @@ def main():
             with st.expander("🎯 TRADUCCION PRACTICA ESTACIONALIDAD", expanded=True):
                 st.markdown("> *Las matemáticas no mienten. A veces las acciones caen en Septiembre porque los grandes fondos cierran libros fiscales. Si la fila de abjo 'Promedio Histórico' está en rojo profundo para un mes en concreto, comprar a princippios de ese mes suele ser un suicidio estadístico probadamente repetido a lo largo de los años.*")
 
-    # --- NUEVO TAB: RADAR QUANT (SCREENER) ---
-    with tab_radar:
+    elif vista_actual == "RADAR QUANT":
         st.markdown("### RADAR AUTOMÁTICO (SCREENER INSTITUCIONAL)")
         st.markdown("El sistema escanea de fondo una lista predefinida de gigantes de mercado, para avisarte en tiempo real de gangas sobrevendidas o burbujas sobrecompradas sin que tú tengas que buscar.")
         
@@ -846,8 +860,7 @@ def main():
                 except Exception as e:
                     st.error(f"Fallo de conexión al mercado escaner: {e}")
 
-    # --- TAB 5: CARTERA REAL (PORTFOLIO TRACKER) ---
-    with tab_port:
+    elif vista_actual == "MI PORTAFOLIO":
         st.markdown("### VALORACION DE CARTERA Y PnL EN VIVO")
         st.markdown("Sistema sincronizado en la Nube. Carga tus activos y valídate para mantener la posición.")
         import database as db
@@ -898,8 +911,7 @@ def main():
         else:
             st.info("Agrega activos en la barra lateral para gestionarlos.")
 
-    # --- TAB 6: FUNDAMENTAL Y NOTICIAS ---
-    with tab_fund:
+    elif vista_actual == "MACRO & NOTICIAS":
         c_head, c_select = st.columns([3, 1])
         c_head.markdown("### MACROECONOMIA, FUNDAMENTALES Y DATA LAKE")
         t_fund = c_select.selectbox("AUDITORÍA CORPORATIVA:", valid_tickers, label_visibility="collapsed", key="fund_sel")
@@ -960,8 +972,7 @@ def main():
                 except Exception as e:
                     st.error(f"El Data Lake no devolvió fundamentales directos para el activo {t_fund}.")
 
-    # --- TAB 7: AI FORECASTING ---
-    with tab_ai:
+    elif vista_actual == "AI FORECASTING":
         st.markdown("### MOTOR DE MACHINE LEARNING (FORECASTING NO-LINEAL)")
         st.markdown("Entrenamiento en vivo de un *Random Forest Regressor* hiperparametrizado para proyectar el vector direccional de los próximos 10 días basado en *Price Action* histórico (Momentum, Volatilidad, Autocorrelación).")
         
@@ -1034,8 +1045,7 @@ def main():
                     else:
                         st.error("NO HAY SUFICIENTES DATOS HISTÓRICOS PARA ENTRENAR LA RED MULTICAPA.")
                         
-    # --- TAB 8: BACKTESTER MAQUINA DEL TIEMPO ---
-    with tab_backtest:
+    elif vista_actual == "BACKTESTER":
         st.markdown("### MAQUINA DEL TIEMPO (BACKTESTER HISTORICO)")
         st.markdown("Simulación retrospectiva de la inyección de capital inicial frente a estrategias de Benchmark pasivo.")
         
@@ -1068,8 +1078,7 @@ def main():
                 c1.metric("SALDO FINAL CARTERA", f"{cap_port.iloc[-1]:,.2f} $", delta=f"{cap_port.iloc[-1] - cap_inicial:,.2f} $")
                 c2.metric("SALDO FINAL SPY", f"{cap_bench.iloc[-1]:,.2f} $", delta=f"{cap_bench.iloc[-1] - cap_inicial:,.2f} $")
 
-    # --- TAB 8: TEAR SHEETS / REPORTES ---
-    with tab_report:
+    elif vista_actual == "REPORTE PDF":
         st.markdown("### GENERACION DE TEAR SHEETS INSTITUCIONALES")
         st.markdown("Exporta la analítica matemática de esta sesión en un informe sintético para clientes.")
         
@@ -1097,8 +1106,7 @@ def main():
 """
             st.download_button("📥 DESCARGAR INFORME (.MD FORMATO WEB/DOC)", data=report_md.encode('utf-8'), file_name="Quant_Tear_Sheet.md", mime="text/markdown")
 
-    # --- TAB 9: AUDITORIA DATOS Y EXPORTACION MASTER ---
-    with tab_data:
+    elif vista_actual == "RAW DATA":
         st.markdown("### EXPORTACIÓN DEL TENSOR DATALAKE")
         st.markdown("Selecciona el formato de renderizado para exportar los miles de puntos matriciales de este análisis a tu software externo.")
         st.dataframe(df_close.sort_index(ascending=False).head(150).style.format("{:.2f} $"), use_container_width=True)
