@@ -172,12 +172,13 @@ def load_market_data(tickers: list, start_date: str, end_date: str) -> pd.DataFr
             
         if isinstance(data.columns, pd.MultiIndex):
             if 'Close' in data.columns.get_level_values(0):
-                df_close = data['Close']
+                df_close = data['Close'].copy()
             else:
                 return pd.DataFrame(), pd.DataFrame()
         else:
             if 'Close' in data.columns:
-                df_close = pd.DataFrame({tickers[0]: data['Close']}) if len(tickers) == 1 else data[['Close']]
+                df_close = pd.DataFrame({tickers[0]: data['Close']}) if len(tickers) == 1 else data[['Close']].copy()
+                if len(tickers) > 1: df_close.columns = df_close.columns.get_level_values(1) if isinstance(df_close.columns, pd.MultiIndex) else [tickers[0]]
             else:
                 return pd.DataFrame(), pd.DataFrame()
 
@@ -768,8 +769,8 @@ def main():
             
             # Retorno mensual
             # Resampleamos a final de mes y calculamos pct change
-            monthly_data = df_s['Close'].resample('ME').last().pct_change() * 100
-            monthly_data = monthly_data.to_frame()
+            monthly_data = df_s[t_season].resample('ME').last().pct_change() * 100
+            monthly_data = monthly_data.to_frame(name='Close')
             monthly_data['Year'] = monthly_data.index.year
             monthly_data['Month'] = monthly_data.index.month
             
