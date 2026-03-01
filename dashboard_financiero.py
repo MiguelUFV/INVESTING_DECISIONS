@@ -1165,8 +1165,8 @@ def main():
                                 # Recopilar Contexto Matemático para el LLM
                                 df_ml = calculate_technical_indicators(df_close[t_ai])
                                 current_pr = df_ml['Close'].iloc[-1]
-                                rsi_now = df_ml['RSI'].iloc[-1]
-                                vol_now = df_ml['Volatilidad_21d'].iloc[-1] * 100
+                                rsi_now = df_ml['RSI_14'].iloc[-1]
+                                vol_now = df_ml['Volatilidad_20d'].iloc[-1] * 100
                                 
                                 # Cargar la Base de Conocimiento Financiero
                                 try:
