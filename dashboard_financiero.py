@@ -481,12 +481,19 @@ def main():
                             
             with tab_register:
                 with st.form("register_form"):
+                    st.markdown("**CREACIÓN DE IDENTIDAD DIGITAL**")
                     u_reg = st.text_input("Nuevo Correo Electrónico Corporativo")
                     p_reg = st.text_input("Nueva Contraseña", type="password")
+                    
+                    st.markdown("---")
+                    gdpr_check = st.checkbox("Declaro que entiendo y acepto que AURA WEALTH OS almacene este correo en sus servidores en la nube para garantizar mi acceso y proveer la funcionalidad analítica solicitada, usando cookies técnicas de sesión. (GDPR Compliance)", value=False)
+                    
                     if st.form_submit_button("Registrar Identidad", type="primary", use_container_width=True):
-                        if "@" in u_reg and len(u_reg) > 5 and len(p_reg) > 3:
+                        if not gdpr_check:
+                            st.warning("⚠️ Debes aceptar la política de almacenamiento en la nube (GDPR) para crear una cuenta institucional.")
+                        elif "@" in u_reg and len(u_reg) > 5 and len(p_reg) > 3:
                             if db.create_user(u_reg, p_reg):
-                                st.success("Identidad aprovisionada. Ya puede Iniciar Sesión en la pestaña adjunta.")
+                                st.success("Identidad aprovisionada existosamente en la Nube. Ya puede Iniciar Sesión en la pestaña adjunta.")
                             else:
                                 st.error("El correo electrónico ya está registrado en la plataforma.")
                         else:

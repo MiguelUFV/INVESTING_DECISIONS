@@ -1,84 +1,57 @@
-import sqlite3
 import hashlib
 import json
 import os
+import requests
+from datetime import datetime
 
-DB_FILE = 'aura_wealth.db'
+# API oficial de SheetDB conectada al Excel de Miguel
+SHEETDB_URL = "https://sheetdb.io/api/v1/q8oe02avgnyth"
 
 def hash_password(password: str) -> str:
-    """Aplica hash SHA-256 a la contraseña."""
+    """Aplica hash SHA-256 a la contraseña por seguridad."""
     return hashlib.sha256(password.encode()).hexdigest()
 
-def init_db():
-    """Inicializa las tablas de la base de datos si no existen."""
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    # Tabla de Usuarios
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            username TEXT PRIMARY KEY,
-            password_hash TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    # Tabla de Carteras
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS portfolios (
-            username TEXT PRIMARY KEY,
-            portfolio_json TEXT NOT NULL,
-            FOREIGN KEY(username) REFERENCES users(username)
-        )
-    ''')
-    conn.commit()
-    conn.close()
-
-def create_user(username, password) -> bool:
-    """Crea un usuario nuevo. Retorna False si ya existe."""
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
+def create_user(username: str, password: str, accept_terms: str = "Términos Aceptados") -> bool:
+    """Crea un usuario nuevo en Google Sheets vía API. Retorna False si ya existe o hay error de red."""
     try:
-        c.execute('INSERT INTO users (username, password_hash) VALUES (?, ?)', (username, hash_password(password)))
-        conn.commit()
-        return True
-    except sqlite3.IntegrityError:
+        # Validación de existencia
+        response = requests.get(f"{SHEETDB_URL}/search?Correo={username}")
+        if response.status_code == 200 and len(response.json()) > 0:
+            return False # El correo ya se registró
+
+        # Registrar en Excel
+        payload = {
+            "data": [{
+                "Correo": username,
+                "Contrasena_Codificada": hash_password(password),
+                "Fecha_Registro": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "Acepta_Terminos": accept_terms
+            }]
+        }
+        res = requests.post(SHEETDB_URL, json=payload)
+        return res.status_code == 201
+    except Exception as e:
+        print(f"Error de base de datos en la nube: {e}")
         return False
-    finally:
-        conn.close()
 
-def authenticate_user(username, password) -> bool:
-    """Verifica credenciales del usuario."""
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute('SELECT password_hash FROM users WHERE username = ?', (username,))
-    row = c.fetchone()
-    conn.close()
-    if row and row[0] == hash_password(password):
-        return True
-    return False
+def authenticate_user(username: str, password: str) -> bool:
+    """Verifica credenciales del usuario en Google Sheets."""
+    try:
+        response = requests.get(f"{SHEETDB_URL}/search?Correo={username}")
+        if response.status_code == 200:
+            users = response.json()
+            if len(users) > 0:
+                user_data = users[0]
+                if user_data.get("Contrasena_Codificada") == hash_password(password):
+                    return True
+        return False
+    except Exception as e:
+        print(f"Error de base de datos en la nube: {e}")
+        return False
 
+# Funciones desactivadas hasta versión Pro de portafolios (requerirían otra pestaña de Excel dedicada)
 def save_portfolio(username: str, portfolio_dict: dict):
-    """Guarda o actualiza la cartera en formato JSON para un usuario."""
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    p_json = json.dumps(portfolio_dict)
-    c.execute('''
-        INSERT INTO portfolios (username, portfolio_json) 
-        VALUES (?, ?) 
-        ON CONFLICT(username) DO UPDATE SET portfolio_json=?
-    ''', (username, p_json, p_json))
-    conn.commit()
-    conn.close()
+    pass
 
 def load_portfolio(username: str) -> dict:
-    """Carga la cartera de un usuario. Retorna {} si no existe."""
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute('SELECT portfolio_json FROM portfolios WHERE username = ?', (username,))
-    row = c.fetchone()
-    conn.close()
-    if row:
-        return json.loads(row[0])
     return {}
-
-# Inicializa el motor al arrancar
-init_db()
