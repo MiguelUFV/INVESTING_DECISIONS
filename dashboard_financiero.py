@@ -1058,6 +1058,7 @@ def main():
                         vars_in = ['Lag_1', 'Lag_2', 'SMA_10', 'Vol_10']
                         X = df_ai[vars_in]
                         y = df_ai['Target']
+                        
                         with st.spinner("Despertando Agente de Inteligencia Artificial (Gemini Pro)..."):
                             try:
                                 # Configurar API Key del usuario
@@ -1104,7 +1105,6 @@ def main():
                                 st.error(f"Error de conexión con IA Cuántica: {e}. Revisa la validez de la clave.")
                     else:
                         st.error("NO HAY SUFICIENTES DATOS HISTÓRICOS PARA ENTRENAR LA RED MULTICAPA.")
-                        
     elif vista_actual == "BACKTESTER":
         st.markdown("### MAQUINA DEL TIEMPO (BACKTESTER HISTORICO)")
         st.markdown("Simulación retrospectiva de la inyección de capital inicial frente a estrategias de Benchmark pasivo.")
