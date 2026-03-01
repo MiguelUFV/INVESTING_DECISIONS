@@ -1157,6 +1157,8 @@ def main():
                         
                         with st.spinner("Despertando Agente de Inteligencia Artificial (Gemini Pro)..."):
                             try:
+                                import google.generativeai as genai
+                                
                                 # Configurar API Key del usuario
                                 genai.configure(api_key="AIzaSyDStCEJ-Ezv865wKjwqDLES8uVQfhVB1vo")
                                 
