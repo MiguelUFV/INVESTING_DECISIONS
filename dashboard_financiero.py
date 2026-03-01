@@ -555,7 +555,7 @@ def main():
                 st.markdown("**USA: TECNOLOGÍA E IA (Nasdaq)**")
                 us_tech = st.multiselect("Big Tech & Semiconductores", 
                     ["AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "META", "TSLA", "AVGO", "CRM", "AMD", "ADBE", "NFLX", "CSCO", "INTC", "QCOM", "IBM", "ORCL", "NOW"], 
-                    default=["AAPL", "MSFT"], label_visibility="collapsed")
+                    default=[], label_visibility="collapsed")
                 st.markdown("<br>**USA: VALOR, FINANZAS Y SALUD**", unsafe_allow_html=True)
                 us_fin = st.multiselect("Banca, Consumo y Farma", 
                     ["JPM", "V", "MA", "BAC", "WFC", "GS", "MS", "BRK-B", "JNJ", "UNH", "LLY", "ABBV", "MRK", "PFE", "PG", "KO", "PEP", "WMT", "COST", "HD", "MCD", "DIS", "NKE"], 
@@ -573,12 +573,12 @@ def main():
                 st.markdown("**MATERIAS PRIMAS Y MACRO (ETFs)**")
                 macro_etf = st.multiselect("Defensivo e Índices", 
                     ["GC=F", "SPY", "QQQ", "DIA", "IWM", "EFA", "EEM", "TLT", "IEF", "GLD", "SLV", "USO", "UNG", "UUP", "VIXY"], 
-                    default=["GC=F", "SPY", "TLT"], label_visibility="collapsed")
+                    default=[], label_visibility="collapsed")
                 st.markdown("<br>**CRIPTOACTIVOS (Top Market Cap)**", unsafe_allow_html=True)
                 crypto = st.multiselect("Ecosistema Digital", 
                     ["BTC-USD", "ETH-USD", "SOL-USD", "BNB-USD", "XRP-USD", "ADA-USD", "AVAX-USD", "DOGE-USD", "DOT-USD", "LINK-USD", "MATIC-USD", "LTC-USD"], 
                     default=[], label_visibility="collapsed")
-
+                    
             st.markdown("<br>**BÚSQUEDA LIBRE DE TICKERS GLOBALES:**", unsafe_allow_html=True)
             custom_tickers = st.text_input("Ingrese símbolos de Yahoo Finance separados por comas", value="", placeholder="Ej: F, GM, PLTR, RKLB")
             
@@ -647,8 +647,12 @@ def main():
     if vista_actual == "TÉCNICO / MOMENTUM":
         c_head, c_select = st.columns([3, 1])
         c_head.markdown("### INSPECCION DE PRECIO Y MOMENTUM ESTRUCTURAL")
-        ticker_tec = c_select.selectbox("SELECCIONAR ACTIVO BASE:", valid_tickers, label_visibility="collapsed")
+        ticker_tec = c_select.selectbox("SELECCIONAR ACTIVO BASE:", valid_tickers, index=None, placeholder="Elegir Activo...", label_visibility="collapsed")
         
+        if not ticker_tec:
+            st.info("👈 Use el menú superior derecho para desplegar el análisis sobre una de las acciones que inicializó al principio.")
+            st.stop()
+            
         with st.expander("GUIA REPTILIANA DE LECTURA GRAFICA (PASO A PASO PARA PRINCIPAIANTES) 👇"):
             st.markdown("""
             **Si nunca has abierto la bolsa, así es como debes traducir este panel institucional:**
@@ -705,8 +709,12 @@ def main():
     with tab_quant:
         c_head, c_select = st.columns([3, 1])
         c_head.markdown("### AUDITORIA PARAMETRICA DE RENDIMIENTO (CAPM)")
-        t_sel = c_select.selectbox("ENFOCAR ACTIVO ANALITICO:", valid_tickers, label_visibility="collapsed", key="capm_sel")
+        t_sel = c_select.selectbox("ENFOCAR ACTIVO ANALITICO:", valid_tickers, index=None, placeholder="Elegir Activo...", label_visibility="collapsed", key="capm_sel")
         
+        if not t_sel:
+            st.info("👈 Seleccione un activo del menú superior derecho para desplegar Capital Asset Pricing.")
+            st.stop()
+            
         if t_sel and BENCHMARK_TICKER in df_close.columns:
             ret_act = df_close[t_sel].pct_change().dropna()
             ret_mkt = df_close[BENCHMARK_TICKER].pct_change().dropna()
@@ -754,8 +762,12 @@ def main():
     elif vista_actual == "MONTE CARLO (VaR)":
         c_head, c_select = st.columns([3, 1])
         c_head.markdown("### CAMINATA BROWNIANA Y METRICAS DE RIESGO DE COLA")
-        t_mc = c_select.selectbox("SERIE OBJETIVO A 1-ANIO:", valid_tickers, label_visibility="collapsed")
+        t_mc = c_select.selectbox("SERIE OBJETIVO A 1-ANIO:", valid_tickers, index=None, placeholder="Elegir Activo...", label_visibility="collapsed")
         
+        if not t_mc:
+            st.info("👈 Seleccione un activo para generar la trayectoria matricial futura estocástica.")
+            st.stop()
+            
         if t_mc:
             with st.spinner("Vectorizando series sintéticas multifásicas..."):
                 returns_mc = df_close[t_mc].pct_change().dropna()
@@ -783,7 +795,12 @@ def main():
         st.markdown("### ESTACIONALIDAD MATEMÁTICA ANUAL")
         st.markdown("Mapa de calor histórico para detectar estadísticamente en qué meses una acción suele subir o colapsar de media.")
         
-        t_season = st.selectbox("ANALIZAR MESES DE:", valid_tickers, label_visibility="collapsed", key="season_sel")
+        t_season = st.selectbox("ANALIZAR MESES DE:", valid_tickers, index=None, placeholder="Elegir Activo...", label_visibility="collapsed", key="season_sel")
+        
+        if not t_season:
+            st.info("👈 Seleccione un activo para mapear su estacionalidad en la Base de Datos.")
+            st.stop()
+            
         if t_season:
             df_s = df_close[[t_season]].copy()
             df_s['Year'] = df_s.index.year
@@ -919,8 +936,12 @@ def main():
     elif vista_actual == "MACRO & NOTICIAS":
         c_head, c_select = st.columns([3, 1])
         c_head.markdown("### MACROECONOMIA, FUNDAMENTALES Y DATA LAKE")
-        t_fund = c_select.selectbox("AUDITORÍA CORPORATIVA:", valid_tickers, label_visibility="collapsed", key="fund_sel")
+        t_fund = c_select.selectbox("AUDITORÍA CORPORATIVA:", valid_tickers, index=None, placeholder="Elegir Activo...", label_visibility="collapsed", key="fund_sel")
         
+        if not t_fund:
+            st.info("👈 Seleccione un activo superior para escanear su NLP.")
+            st.stop()
+            
         if t_fund:
             with st.spinner(f"Conectando con Data Lake de YFinance para {t_fund}..."):
                 try:
@@ -981,8 +1002,12 @@ def main():
         st.markdown("### MOTOR DE MACHINE LEARNING (FORECASTING NO-LINEAL)")
         st.markdown("Entrenamiento en vivo de un *Random Forest Regressor* hiperparametrizado para proyectar el vector direccional de los próximos 10 días basado en *Price Action* histórico (Momentum, Volatilidad, Autocorrelación).")
         
-        t_ai = st.selectbox("OPERAR RED NEURONAL SOBRE ACTIVO:", valid_tickers, label_visibility="collapsed", key="ai_sel")
+        t_ai = st.selectbox("OPERAR RED NEURONAL SOBRE ACTIVO:", valid_tickers, index=None, placeholder="Elegir Activo...", label_visibility="collapsed", key="ai_sel")
         
+        if not t_ai:
+            st.info("👈 Seleccione el activo de la lista para despertar el motor LLM.")
+            st.stop()
+            
         if t_ai:
             if st.button("INICIAR INFERENCIA (SCIKIT-LEARN)", type="primary"):
                 with st.spinner(f"Entrenando modelo Random Forest para {t_ai}..."):
@@ -1091,8 +1116,12 @@ def main():
         if st.button("GENERAR INFORME MATRICIAL", type="primary"):
             report_md = f"""# TEAR SHEET INSTITUCIONAL (QUANT ENGINE)
         # Simular Reporte PDF exportable (Tear Sheet)
-        t_rep = st.selectbox("GENERAR SÍNTESIS DE:", valid_tickers, label_visibility="collapsed")
+        t_rep = st.selectbox("GENERAR SÍNTESIS DE:", valid_tickers, index=None, placeholder="Elegir Activo...", label_visibility="collapsed")
         
+        if not t_rep:
+            st.info("Selecciona el activo para forjar el Tear Sheet corporativo PDF.")
+            st.stop()
+            
         if st.button("GENERAR TEAR SHEET (.PDF)"):
             with st.spinner("Compilando Documento PDF Corporativo..."):
                 try:
